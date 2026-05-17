@@ -190,9 +190,48 @@
 
     // 提取主要内容（<main id="spa-content"> 内部内容）
     extractContent: function (html) {
-      var doc = new DOMParser().parseFromString(html, "text/html");
-      var main = doc.getElementById("spa-content");
-      return main ? main.innerHTML : null;
+      var _self = this;
+      var result = null;
+
+      // Method 1: DOMParser + getElementById
+      try {
+        var doc = new DOMParser().parseFromString(html, "text/html");
+        var main = doc.getElementById("spa-content");
+        if (main) {
+          result = main.innerHTML;
+        } else {
+          // Method 2: fallback to getElementsByTagName
+          var mains = doc.getElementsByTagName("main");
+          if (mains.length > 0) {
+            _self.log("extractContent: getElementById failed, using getElementsByTagName[0] (id=" + mains[0].id + ")");
+            result = mains[0].innerHTML;
+          } else {
+            var body = doc.body;
+            _self.log("extractContent: spa-content NOT found. body children: " + body.children.length + ", htmlLen=" + html.length);
+          }
+        }
+      } catch (e) {
+        _self.log("extractContent: DOMParser error: " + e.message);
+      }
+
+      // Method 3: string indexOf/lastIndexOf fallback (no regex escape issues)
+      if (!result) {
+        _self.log("extractContent: DOMParser failed, trying string indexOf fallback");
+        var startTag = '<main id="spa-content"';
+        var startIdx = html.indexOf(startTag);
+        if (startIdx >= 0) {
+          var contentStart = html.indexOf(">", startIdx) + 1;
+          var endIdx = html.lastIndexOf("</main>");
+          if (endIdx > contentStart) {
+            result = html.substring(contentStart, endIdx);
+            _self.log("extractContent: indexOf fallback succeeded, contentLen=" + result.length);
+          } else {
+            _self.log("extractContent: </main> not found in HTML (htmlLen=" + html.length + ")");
+          }
+        }
+      }
+
+      return result;
     },
 
     // 提取标题
@@ -475,9 +514,12 @@
       this.showSkeleton();
 
       // 加载页面（不使用内存缓存，始终获取最新内容）
-      fetch(devicePath)
+      fetch(devicePath, { cache: 'no-store' })
         .then(function (response) {
           if (!response.ok) throw new Error("HTTP " + response.status);
+          var cl = response.headers.get('content-length');
+          var ce = response.headers.get('content-encoding');
+          _self.log("loadRoute: fetch headers content-length=" + cl + " encoding=" + ce);
           return response.text();
         })
         .then(function (html) {
@@ -486,6 +528,7 @@
             _self.hideSkeleton(); // 安全恢复：防止 display:none 残留
             return;
           }
+          _self.log("loadRoute: fetch succeeded for " + devicePath + " htmlLen=" + html.length);
           _self.renderContent(devicePath, html);
         })
         .catch(function (error) {
@@ -674,8 +717,9 @@
         if (initialHash) {
           this._pendingScroll = initialHash;
         }
-        // 但需要初始化组件
-        this.loadRoute(currentPath);
+        // 但需要初始化组件（使用版本号防止竞态）
+        _self._navVersion = (_self._navVersion || 0) + 1;
+        this.loadRoute(currentPath, _self._navVersion);
       } else if (currentPath === "/" || currentPath === "//") {
         this.replace("/home/");
       } else if (currentPath.match(/^\/products\/[^/]+\/$/)) {
@@ -684,7 +728,8 @@
         var container = document.getElementById("spa-content");
         if (!container || !container.innerHTML.trim()) {
           this.log("Dynamic route on init (empty container):", currentPath);
-          this.loadRoute(currentPath);
+          _self._navVersion = (_self._navVersion || 0) + 1;
+          this.loadRoute(currentPath, _self._navVersion);
         } else {
           this.log("Dynamic route on init (content exists, skip loadRoute):", currentPath);
         }
