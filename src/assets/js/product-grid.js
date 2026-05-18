@@ -392,15 +392,25 @@
         .catch(function (err) {
           console.error("[ProductGrid] Failed to load product data:", err);
           // Fallback: restore from localStorage
+          var restored = false;
           try {
             var cached = JSON.parse(localStorage.getItem("pdt_v2"));
             if (Array.isArray(cached) && cached.length > 0) {
               window[STORE_KEY] = cached;
-              _dataLoaded = true;
-              window.dispatchEvent(new Event("product-data-ready"));
+              restored = true;
             }
           } catch (e) {}
+          // Fallback: use whatever static data is in window[STORE_KEY]
+          if (!restored && !Array.isArray(window[STORE_KEY])) {
+            window[STORE_KEY] = [];
+          }
+          _dataLoaded = true;
+          _dataCallbacks.forEach(function (cb) {
+            cb();
+          });
           _dataCallbacks = [];
+          _fetchPromise = null;
+          window.dispatchEvent(new Event("product-data-ready"));
         });
     }
   }
@@ -550,12 +560,12 @@
       (badge ? '<div class="absolute top-4 left-4 flex gap-2">' + badge + "</div>" : "") +
       "</div>" +
       '<div class="p-6">' +
-      '<div class="flex items-center gap-2 mb-3"><span class="material-symbols-outlined text-primary">local_fire_department</span><span class="text-sm font-bold text-primary uppercase tracking-wider"' +
+      '<div class="flex items-center gap-2 mb-3"><span class="material-symbols-outlined text-primary text-sm">local_cafe</span><span class="text-xs font-bold text-primary uppercase tracking-wider"' +
       subCatDataI18n +
       ">" +
       subCat +
       "</span></div>" +
-      '<h3 class="text-xl font-bold mb-2 text-slate-900 dark:text-white">' +
+      '<h3 class="text-lg font-bold mb-2 text-slate-900 dark:text-white line-clamp-1">' +
       name +
       "</h3>" +
       '<p class="text-sm text-slate-500 dark:text-slate-400 mb-4 line-clamp-2">' +
@@ -563,11 +573,11 @@
       "</p>" +
       (specHTML ? '<div class="flex flex-wrap gap-2 mb-4">' + specHTML + "</div>" : "") +
       '<div class="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700">' +
-      '<div><span class="text-xs text-slate-400">起售价</span><p class="text-xl font-black text-primary">询价</p></div>' +
+      '<div><span class="text-xs text-slate-400">\u8D77\u8BA2\u4EF7</span><p class="text-lg font-black text-primary">\u8BE2\u4EF7</p></div>' +
       '<div class="flex items-center gap-2">' +
       '<a href="' +
       link +
-      '" class="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-lg font-bold text-sm hover:opacity-90 transition-opacity"><span>查看详情</span><span class="material-symbols-outlined text-sm">arrow_forward</span></a>' +
+      '" class="flex items-center gap-1.5 bg-primary text-white px-4 py-2 rounded-lg font-bold text-xs hover:opacity-90 transition-opacity"><span>\u67E5\u770B\u8BE6\u60C5</span><span class="material-symbols-outlined text-xs">arrow_forward</span></a>' +
       buildCompareBtnHTML(model) +
       "</div>" +
       "</div>" +
@@ -618,7 +628,7 @@
       (badge ? '<div class="absolute top-3 left-3 flex gap-1.5">' + badge + "</div>" : "") +
       "</div>" +
       '<div class="p-4">' +
-      '<div class="flex items-center gap-1.5 mb-2"><span class="material-symbols-outlined text-primary text-sm">local_fire_department</span><span class="text-xs font-bold text-primary uppercase tracking-wider"' +
+      '<div class="flex items-center gap-1.5 mb-2"><span class="material-symbols-outlined text-primary text-sm">local_cafe</span><span class="text-xs font-bold text-primary uppercase tracking-wider"' +
       subCatDataI18n +
       ">" +
       subCat +
@@ -790,7 +800,15 @@
     var cats = getCategories();
     var prods = getAllProducts();
     if (!cats.length) {
-      console.warn("[ProductGrid] doRender ABORT: no categories");
+      console.warn("[ProductGrid] doRender: no categories, showing empty state");
+      var target = document.getElementById("product-list") || document.getElementById("product-grid");
+      if (target) {
+        target.innerHTML = '<div class="col-span-full text-center py-16 text-gray-400">' +
+          '<span class="material-symbols-outlined text-5xl mb-3 block">inventory_2</span>' +
+          '<p>No products available yet.</p></div>';
+      }
+      var overlay = document.getElementById("skeleton-overlay");
+      if (overlay) overlay.setAttribute("hidden", "");
       return;
     }
     if (document.getElementById("product-list")) {
@@ -842,7 +860,7 @@
     getCategories().forEach(function (cat) {
       var name = cat.categoryName || cat.category;
       if (name) {
-        // Translate category if it's an i18n key (e.g. nav_products_stirfry)
+        // Translate category if it's an i18n key (e.g. nav_products_coffee)
         var translated = typeof window.t === "function" ? window.t(cat.category) : null;
         var label = translated && translated !== cat.category ? translated : name;
         categories.push({ key: cat.category, name: label });
@@ -867,7 +885,7 @@
     allBtn.className =
       "category-tab active " +
       tabSizeClass +
-      " font-bold whitespace-nowrap rounded-full border border-slate-200 dark:border-slate-700";
+      " font-bold whitespace-nowrap rounded-xl";
     allBtn.dataset.category = "all";
     allBtn.textContent = "全部产品";
     allTabs.push(allBtn);
@@ -877,7 +895,7 @@
       btn.className =
         "category-tab " +
         tabSizeClass +
-        " font-medium whitespace-nowrap rounded-full border border-slate-200 dark:border-slate-700";
+        " font-semibold whitespace-nowrap rounded-xl";
       btn.dataset.category = cat.key;
       var emoji = CATEGORY_EMOJI[cat.key] || "";
       btn.textContent = emoji ? emoji + " " + cat.name : cat.name;
@@ -887,7 +905,7 @@
     // "More" toggle button
     var moreBtn = document.createElement("button");
     moreBtn.className =
-      "category-tab-more px-3 py-2 text-xs font-bold whitespace-nowrap rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 cursor-pointer";
+      "category-tab-more px-3 py-2 text-xs font-bold whitespace-nowrap rounded-xl text-slate-500 dark:text-slate-400 cursor-pointer";
 
     // Dynamic visible tab count: measures actual tab widths against container
     var dynamicMax = Infinity;
@@ -1045,13 +1063,14 @@
 
   // ─── Init ──────────────────────────────────────────────────────
 
-  // Resolve initial category from URL for SSG page loads (e.g. /products/cutting/ → "nav_products_cutting")
+  // Resolve initial category from URL for SSG page loads (e.g. /products/coffee/ → "nav_products_coffee")
   // This runs before autoRender so the first render filters correctly.
   (function initCategoryFromUrl() {
     var match = window.location.pathname.match(/^\/products\/([^/]+)\/$/);
     if (match) {
       var slug = match[1];
-      var SLUG_MAP = (_cfgCats.products || []).reduce(function (m, c) {
+      var cats = (window.SITE_CONFIG || window._cfg || {}).categories || {};
+      var SLUG_MAP = (cats.products || []).reduce(function (m, c) {
         if (c.slug && c.key) m[c.slug] = c.key;
         return m;
       }, {});
@@ -1137,7 +1156,8 @@
     var match = window.location.pathname.match(/^\/products\/([^/]+)\/$/);
     if (match) {
       var slug = match[1];
-      var SLUG_MAP = (_cfgCats.products || []).reduce(function (m, c) {
+      var cats = (window.SITE_CONFIG || window._cfg || {}).categories || {};
+      var SLUG_MAP = (cats.products || []).reduce(function (m, c) {
         if (c.slug && c.key) m[c.slug] = c.key;
         return m;
       }, {});

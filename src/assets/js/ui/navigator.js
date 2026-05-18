@@ -8,8 +8,7 @@
  * 依赖：
  *   - (nav-config removed — uses built-in defaults)
  *   - window.ProductsDropdown       (dropdown/products-dropdown.js)
- *   - window.ApplicationsDropdown   (dropdown/applications-dropdown.js)
- *   - window.SupportDropdown        (dropdown/support-dropdown.js)
+ *   - window.SolutionsDropdown       (dropdown/solutions-dropdown.js)
  *   - window.AboutDropdown          (dropdown/about-dropdown.js)
  *   - window.SlideMenu              (slide-menu.js)
  *   - window.DropdownBaseStyles     (dropdown-styles.js)
@@ -23,7 +22,7 @@
    */
   function getPrimaryColor() {
     var cfg = window.SITE_CONFIG || window._cfg || {};
-    return ((cfg.theme || {}).colors || {}).primary || "#006064";
+    return ((cfg.theme || {}).colors || {}).primary || "#2E7D32";
   }
   /**
    * 获取主题 accent 色彩（实时从 SITE_CONFIG 读取）
@@ -48,27 +47,9 @@
    *  常量 & 配置
    * ================================================================ */
 
-  /**
-   * 主导航项
-   * @type {Array<{key:string, label:string, path:string, id:string, hasDropdown:boolean}>}
-   */
-  var DEFAULT_NAV_ITEMS = [
-    { key: "nav_products", label: "产品中心", path: "/products/", id: "products", hasDropdown: true },
-    { key: "nav_applications", label: "行业场景", path: "/applications/", id: "applications", hasDropdown: true },
-    { key: "nav_cases", label: "真实案例", path: "/cases/", id: "cases", hasDropdown: false },
-    {
-      key: "nav_profit_calculator",
-      label: "投资回报",
-      path: "/profit-calculator/",
-      id: "profit-calculator",
-      hasDropdown: false,
-    },
-    { key: "nav_support", label: "服务支持", path: "/support/", id: "support", hasDropdown: true },
-    { key: "nav_about", label: "关于我们", path: "/about/", id: "about", hasDropdown: true },
-    { key: "nav_contact", label: "联系我们", path: "/contact/", id: "contact", hasDropdown: false },
-  ];
-
   /** @type {Array} 当前生效的导航项 (recomputed per-call to avoid stale closure) */
+
+  /* CANONICAL_NAV_ITEMS 定义在文件末尾，作为 config 完全不可用时的 fallback */
 
   /**
    * 获取导航项（配置驱动）
@@ -94,12 +75,8 @@
         };
       });
     }
-    // 从 categories 构建导航项（如果有 productLines 配置）
-    if (cfg.navMode && cfg.categories) {
-      return buildNavFromConfig(cfg);
-    }
-    // Fallback 到硬编码
-    return DEFAULT_NAV_ITEMS;
+    // Fallback 到 CANONICAL_NAV_ITEMS（定义在文件末尾）
+    return CANONICAL_NAV_ITEMS;
   }
 
   /**
@@ -108,83 +85,23 @@
    * @returns {Array} 导航项数组
    */
   function buildNavFromConfig(cfg) {
-    var cats = cfg.categories || {};
-    var items = [];
-
-    // 产品
-    if (cats.products && cats.products.length > 0) {
-      items.push({
-        key: "nav_products",
-        label: cfg.brand ? cfg.brand.name + " " + "Products" : "Products",
-        path: "/products/",
-        id: "products",
-        hasDropdown: true
-      });
+    var navItems = (cfg.nav || {}).items;
+    if (!navItems || !Array.isArray(navItems) || navItems.length === 0) {
+      return CANONICAL_NAV_ITEMS;
     }
-
-    // 行业场景 / Solutions（如果有 productLines，改用 Solutions 作为菜单名）
-    if (cats.applications && cats.applications.length > 0) {
-      items.push({
-        key: "nav_applications",
-        label: cfg.navMode && cfg.navMode.desktop === "mega-menu" ? "Solutions" : "行业场景",
-        path: "/applications/",
-        id: "applications",
-        hasDropdown: true
-      });
-    }
-
-    // 案例
-    if (cfg.cases && cfg.cases.grid && cfg.cases.grid.length > 0) {
-      items.push({
-        key: "nav_cases",
-        label: "真实案例",
-        path: "/cases/",
-        id: "cases",
-        hasDropdown: false
-      });
-    }
-
-    // ROI
-    if (cfg.features && cfg.features.profitCalculator) {
-      items.push({
-        key: "nav_profit_calculator",
-        label: "投资回报",
-        path: "/profit-calculator/",
-        id: "profit-calculator",
-        hasDropdown: false
-      });
-    }
-
-    // Support
-    if (cats.support && cats.support.length > 0) {
-      items.push({
-        key: "nav_support",
-        label: "服务支持",
-        path: "/support/",
-        id: "support",
-        hasDropdown: true
-      });
-    }
-
-    // About
-    items.push({
-      key: "nav_about",
-      label: "关于我们",
-      path: "/about/",
-      id: "about",
-      hasDropdown: true
+    return navItems.map(function (navItem) {
+      var label = typeof navItem.label === "object"
+        ? (navItem.label["zh-CN"] || navItem.label.en || navItem.id)
+        : navItem.label;
+      return {
+        key: navItem.i18nKey || ("nav_" + navItem.id),
+        label: label,
+        path: navItem.href || ("/" + navItem.id + "/"),
+        id: navItem.id,
+        hasDropdown: !!(navItem.children && navItem.children.length > 0),
+        _source: navItem,
+      };
     });
-
-    // Contact
-    items.push({
-      key: "nav_contact",
-      label: "联系我们",
-      path: "/contact/",
-      id: "contact",
-      hasDropdown: false
-    });
-
-    return items;
   }
 
   /**
@@ -193,10 +110,10 @@
    */
   var DROPDOWN_WRAP_SELECTORS = [
     ".prod-dropdown-wrap",
-    ".app-dropdown-wrap",
-    ".sup-dropdown-wrap",
+    ".sol-dropdown-wrap",
     ".abt-dropdown-wrap",
     ".cnt-dropdown-wrap",
+    ".nav-dropdown-wrap",
     ".mega-menu-wrap",
   ];
 
@@ -206,10 +123,11 @@
    * @type {Object<string, string>}
    */
   var PATH_TO_ACTIVE_MAP = {
-    "case-studies": "applications",
-    roi: "profit-calculator",
+    "oem-customization": "solutions",
+    "odm-service": "solutions",
+    "obm-partnership": "solutions",
+    "case-studies": "solutions",
     news: "contact",
-    quote: "contact",
     "thank-you": "contact",
   };
 
@@ -227,8 +145,7 @@
 
   /* Sections whose nav item id differs from the activeSectionId (version drift) */
   var ID_ALIASES = {
-    "profit-calculator": ["profit", "profit-calculator"],
-    profit: ["profit", "profit-calculator"],
+    solutions: ["solutions"],
   };
 
   /**
@@ -237,14 +154,16 @@
    */
   var ACTIVE_TO_PREFIX_MAP = {
     products: "prod",
-    applications: "app",
-    support: "sup",
+    solutions: "sol",
+    manufacturing: "mfg",
+    compliance: "cmp",
     about: "abt",
     contact: "cnt",
-    "case-studies": "app",
-    roi: "sol",
+    "case-studies": "sol",
+    "oem-customization": "sol",
+    "odm-service": "sol",
+    "obm-partnership": "sol",
     news: "cnt",
-    quote: "cnt",
     "thank-you": "cnt",
   };
 
@@ -314,7 +233,7 @@
       '<input class="ios-search-input" id="' +
       inputId +
       '" ' +
-      'placeholder="Search equipment..." ' +
+      'placeholder="Search products..." ' +
       'data-i18n-placeholder="' +
       escapeHtml(opts.placeholderI18n || "search_placeholder") +
       '" ' +
@@ -347,15 +266,15 @@
         '<div class="flex items-center gap-2 flex-shrink-0">' +
         buildLangSelectorHtml() +
         '<a href="' +
-        escapeHtml(opts.ctaHref || "/quote/") +
+        escapeHtml(opts.ctaHref || "/contact/") +
         '" ' +
         'class="bg-primary text-white px-4 py-2 rounded-lg font-bold ' +
         'text-xs whitespace-nowrap active:scale-95 transition-all outline-none" ' +
         'style="-webkit-tap-highlight-color:transparent;color:#fff!important;"' +
         'data-i18n="' +
-        escapeHtml(opts.ctaTextKey || "nav_get_quote") +
+        escapeHtml(opts.ctaTextKey || "nav_contact_us") +
         '">' +
-        "获取报价" +
+        "联系我们" +
         "</a>" +
         "</div>";
     } else {
@@ -428,6 +347,7 @@
         products: window.ProductsDropdown,
         applications: window.ApplicationsDropdown,
         support: window.SupportDropdown,
+        solutions: window.SolutionsDropdown,
         about: window.AboutDropdown,
       };
       var dropdown = dropdownModules[navItem.id];
@@ -440,6 +360,23 @@
         }
         if (variant === "tablet") {
           return dropdown.renderTablet(renderArgs);
+        }
+      }
+
+      /* 通用 NavDropdown 模块（处理所有未定制的有子项菜单） */
+      if (typeof window.NavDropdown !== "undefined") {
+        var genericRenderArgs = {
+          href: href,
+          labelKey: navItem.key,
+          label: navItem.label,
+          activeClass: activeClass,
+          navItem: navItem,
+        };
+        if (variant === "pc") {
+          return window.NavDropdown.renderPC(genericRenderArgs);
+        }
+        if (variant === "tablet") {
+          return window.NavDropdown.renderTablet(genericRenderArgs);
         }
       }
 
@@ -619,7 +556,7 @@
   }
 
   /**
-   * 构建 CTA 按钮（"获取报价"）HTML
+   * 构建 CTA 按钮（"联系我们"）HTML
    * @param {Object} opts - 配置项
    * @param {string} opts.ctaTextKey - i18n key
    * @param {string} opts.ctaHref - 链接地址
@@ -638,7 +575,7 @@
       'data-i18n="' +
       escapeHtml(opts.ctaTextKey) +
       '">' +
-      "获取报价" +
+      "联系我们" +
       "</a>" +
       "</div>"
     );
@@ -674,7 +611,7 @@
     }
 
     return (
-      '<header class="fixed top-0 left-0 right-0 z-[var(--z-header)] ' +
+      '<header id="main-header" class="fixed top-0 left-0 right-0 z-[var(--z-header)] ' +
       "border-b border-slate-200 dark:border-slate-800 " +
       'bg-background-light/90 dark:bg-background-dark/90">' +
       '<div class="max-w-[1920px] mx-auto px-3 md:px-5 lg:px-5 xl:px-10 ' +
@@ -886,9 +823,12 @@
   function injectDropdownStyles() {
     if (window.DropdownBaseStyles) window.DropdownBaseStyles.inject();
     if (window.ProductsDropdown) window.ProductsDropdown.injectAllStyles();
+    if (window.SolutionsDropdown) window.SolutionsDropdown.injectAllStyles();
+    if (window.AboutDropdown) window.AboutDropdown.injectAllStyles();
     if (window.ApplicationsDropdown) window.ApplicationsDropdown.injectAllStyles();
     if (window.SupportDropdown) window.SupportDropdown.injectAllStyles();
-    if (window.AboutDropdown) window.AboutDropdown.injectAllStyles();
+    if (window.NavDropdown) window.NavDropdown.injectAllStyles();
+    if (window.ContactDropdown) window.ContactDropdown.injectAllStyles();
   }
 
   /* ================================================================
@@ -1330,8 +1270,8 @@
       searchBp: placeholder.getAttribute("data-search-bp") || "xl",
       showLang: parseBooleanAttr(placeholder.getAttribute("data-lang"), true),
       showCta: parseBooleanAttr(placeholder.getAttribute("data-cta"), true),
-      ctaTextKey: placeholder.getAttribute("data-cta-text-key") || "nav_get_quote",
-      ctaHref: placeholder.getAttribute("data-cta-href") || "/quote/",
+      ctaTextKey: placeholder.getAttribute("data-cta-text-key") || "nav_contact_us",
+      ctaHref: placeholder.getAttribute("data-cta-href") || "/contact/",
     };
   }
 
@@ -1362,12 +1302,12 @@
       "click",
       function (e) {
         var trigger = e.target.closest(
-          ".prod-dropdown-trigger, .app-dropdown-trigger, .sup-dropdown-trigger, .abt-dropdown-trigger, .cnt-dropdown-trigger"
+          ".prod-dropdown-trigger, .sol-dropdown-trigger, .abt-dropdown-trigger, .cnt-dropdown-trigger"
         );
         if (!trigger) return;
         if (window.innerWidth <= 720) return;
         var wrap = trigger.closest(
-          ".prod-dropdown-wrap, .app-dropdown-wrap, .sup-dropdown-wrap, .abt-dropdown-wrap, .cnt-dropdown-wrap"
+          ".prod-dropdown-wrap, .sol-dropdown-wrap, .abt-dropdown-wrap, .cnt-dropdown-wrap"
         );
         if (wrap) {
           closeOtherDropdowns(wrap);
@@ -1393,7 +1333,7 @@
       "click",
       function (e) {
         var clickedWrap = e.target.closest(
-          ".prod-dropdown-wrap, .app-dropdown-wrap, .sup-dropdown-wrap, .abt-dropdown-wrap, .cnt-dropdown-wrap"
+          ".prod-dropdown-wrap, .sol-dropdown-wrap, .abt-dropdown-wrap, .cnt-dropdown-wrap, .nav-dropdown-wrap, .mega-menu-wrap"
         );
         closeOtherDropdowns(clickedWrap || null);
       },
@@ -1461,9 +1401,10 @@
     /* Re-bind dropdown click handlers after mount — trigger elements
      * may not have existed when registerListeners() first called initDropdownClick() */
     if (window.ProductsDropdown) window.ProductsDropdown.initDropdownClick();
-    if (window.ApplicationsDropdown) window.ApplicationsDropdown.initDropdownClick();
-    if (window.SupportDropdown) window.SupportDropdown.initDropdownClick();
+    if (window.SolutionsDropdown) window.SolutionsDropdown.initDropdownClick();
     if (window.AboutDropdown) window.AboutDropdown.initDropdownClick();
+    if (window.ContactDropdown) window.ContactDropdown.initDropdownClick();
+    if (window.NavDropdown) window.NavDropdown.initDropdownClick();
   }
 
   /* ================================================================
@@ -1475,7 +1416,7 @@
    * 根据当前 URL 匹配导航项和 dropdown 子项。
    *
    * @param {string} [activeSectionId=""] - 当前页面所属导航 section id
-   *   (e.g. "products", "applications", "support", "about")
+   *   (e.g. "products", "solutions", "manufacturing", "about")
    */
   function updateActive(activeSectionId) {
     activeSectionId = activeSectionId || "";
@@ -1489,12 +1430,10 @@
     /* ---------- 1. 更新 dropdown trigger 元素的高亮 ---------- */
     var triggerSelectors = [
       "header nav a.prod-dropdown-trigger",
-      "header nav a.app-dropdown-trigger",
-      "header nav a.sup-dropdown-trigger",
+      "header nav a.sol-dropdown-trigger",
       "header nav a.abt-dropdown-trigger",
-      "header nav a[data-sup-trigger-label]",
+      "header nav a[data-sol-trigger-label]",
       "header nav a[data-prod-trigger-label]",
-      "header nav a[data-app-trigger-label]",
       "header nav a[data-abt-trigger-label]",
     ];
 
@@ -1515,8 +1454,6 @@
         triggerEl.getAttribute("data-i18n") ||
         triggerEl.getAttribute("data-prod-trigger-label") ||
         triggerEl.getAttribute("data-sol-trigger-label") ||
-        triggerEl.getAttribute("data-app-trigger-label") ||
-        triggerEl.getAttribute("data-sup-trigger-label") ||
         triggerEl.getAttribute("data-abt-trigger-label") ||
         triggerEl.getAttribute("data-cnt-trigger-label") ||
         "";
@@ -1548,8 +1485,7 @@
       /* Skip dropdown triggers (already handled above) */
       if (
         plainEl.classList.contains("prod-dropdown-trigger") ||
-        plainEl.classList.contains("app-dropdown-trigger") ||
-        plainEl.classList.contains("sup-dropdown-trigger") ||
+        plainEl.classList.contains("sol-dropdown-trigger") ||
         plainEl.classList.contains("abt-dropdown-trigger")
       ) {
         continue;
@@ -1575,8 +1511,7 @@
     /* ---------- 2. 清除所有 dropdown item 的 is-active ---------- */
     var activeItems = document.querySelectorAll(
       ".prod-dropdown-item.is-active, " +
-        ".app-dropdown-item.is-active, " +
-        ".sup-dropdown-item.is-active, " +
+        ".sol-dropdown-item.is-active, " +
         ".abt-dropdown-item.is-active"
     );
     for (var k = 0; k < activeItems.length; k++) {
@@ -1638,7 +1573,7 @@
    * 高亮指定的产品分类 dropdown item（用于产品详情页侧边栏联动）
    *
    * @param {string} categoryKey - 要高亮的分类 i18n key
-   *   (e.g. "nav_products_cutting")
+   *   (e.g. "nav_products_coffee")
    */
   function highlightCategory(categoryKey) {
     if (!categoryKey) return;
@@ -1726,6 +1661,21 @@
   });
 
   /* ================================================================
+   *  CANONICAL_NAV_ITEMS — 全局共享导航项常量
+   *  当 SITE_CONFIG.nav.items 完全不可用时作为 fallback
+   *  navigator.js 与 slide-menu.js 共用同一份定义
+   * ================================================================ */
+
+  var CANONICAL_NAV_ITEMS = [
+    { key: "nav_solutions", label: "Solutions", path: "/solutions/", id: "solutions", hasDropdown: true },
+    { key: "nav_products", label: "Products", path: "/products/", id: "products", hasDropdown: true },
+    { key: "nav_manufacturing", label: "Manufacturing", path: "/manufacturing/", id: "manufacturing", hasDropdown: false },
+    { key: "nav_compliance", label: "Compliance", path: "/compliance/", id: "compliance", hasDropdown: false },
+    { key: "nav_resources", label: "Resources", path: "/resources/", id: "resources", hasDropdown: true },
+    { key: "nav_contact", label: "Contact", path: "/contact/", id: "contact", hasDropdown: false },
+  ];
+
+  /* ================================================================
    *  公开 API — window.Navigator
    * ================================================================ */
 
@@ -1767,9 +1717,10 @@
 
     /* 重新绑定 dropdown click handlers（mountNavigator 可能未调用） */
     if (window.ProductsDropdown) window.ProductsDropdown.initDropdownClick();
-    if (window.ApplicationsDropdown) window.ApplicationsDropdown.initDropdownClick();
-    if (window.SupportDropdown) window.SupportDropdown.initDropdownClick();
+    if (window.SolutionsDropdown) window.SolutionsDropdown.initDropdownClick();
     if (window.AboutDropdown) window.AboutDropdown.initDropdownClick();
+    if (window.ContactDropdown) window.ContactDropdown.initDropdownClick();
+    if (window.NavDropdown) window.NavDropdown.initDropdownClick();
 
     /* 重新初始化 custom-select（navigator 可能创建了新的 lang-selector） */
     if (typeof CustomSelect !== "undefined" && CustomSelect.initAll) {
