@@ -55,7 +55,7 @@ sync_assets() {
 # ─── 1. HTML pages ──────────────────────────────────────────────
 echo "📦 Syncing HTML pages..."
 # Copy site.config.js to dist root
-cp "site.config.js" "$DIST/site.config.js"
+cp "src/assets/js/site.config.js" "$DIST/site.config.js"
 find "$SRC/pages" -name '*.html' -print0 | while IFS= read -r -d '' f; do
   rel="${f#$SRC/}"
   mkdir -p "$DIST/$(dirname "$rel")"
@@ -84,6 +84,8 @@ echo "🔄 Bumping JS version to $VERSION..."
 # Replace all version query params (handles v=20260508, v=20260508-v3, v=anystring, v=this)
 find "$DIST" -name '*.html' -exec sed -i '' "s|?v=[a-zA-Z0-9._-]*|?$VERSION|g" {} +
 find "$SRC/pages" -name '*.html' -exec sed -i '' "s|?v=[a-zA-Z0-9._-]*|?$VERSION|g" {} +
+# Also update src/index.html (SPA shell)
+sed -i '' "s|?v=[a-zA-Z0-9._-]*|?$VERSION|g" "$SRC/index.html" 2>/dev/null || true
 
 # Generate sitemap.xml
 if command -v node &>/dev/null; then

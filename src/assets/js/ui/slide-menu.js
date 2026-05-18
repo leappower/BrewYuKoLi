@@ -17,7 +17,7 @@
 (function (global) {
   "use strict";
   var _theme = (window.SITE_CONFIG || window._cfg || {}).theme || {};
-  var _primary = ((_theme.colors || {}).primary) || "#006064";
+  var _primary = ((_theme.colors || {}).primary) || "#2E7D32";
 
   var _spaRegs = {};
   function _spaOn(tgt, evt, fn, key) {
@@ -58,7 +58,7 @@
       ".mobile-menu-overlay {",
       "  position: fixed; inset: 0;",
       "  background: rgba(0,0,0,.4);",
-      "  z-index: var(--z-header, 2000);",
+      "  z-index: var(--z-drawer, 10000);",
       "  opacity: 0; visibility: hidden;",
       "  transition: opacity .3s ease, visibility 0s .3s;",
       "}",
@@ -74,9 +74,9 @@
       "  background: rgba(246,246,248,.98);",
       "  backdrop-filter: blur(40px) saturate(200%);",
       "  -webkit-backdrop-filter: blur(40px) saturate(200%);",
-      "  z-index: calc(var(--z-header, 2000) + 10);",
+      "  z-index: calc(var(--z-drawer, 10000) + 10);",
       "  transform: translateX(-100%);",
-      "  transition: transform .35s cubic-bezier(.32,.72,0,1);",
+      "  transition: transform .35s cubic-bezier(.32,.72,0,1);",,
       "  overflow-y: auto; -webkit-overflow-scrolling: touch;",
       "  box-shadow: 4px 0 24px rgba(0,0,0,.08);",
       "}",
@@ -431,12 +431,11 @@
   var cachedMenuItems = null;
 
   var L1_ICON_MAP = {
-    products: "kitchen",
-    applications: "apps",
-    cases: "cases",
-    "profit-calculator": "calculate",
-    support: "support_agent",
-    about: "info",
+    products: "inventory_2",
+    solutions: "lightbulb",
+    manufacturing: "factory",
+    compliance: "verified",
+    resources: "menu_book",
     contact: "mail",
   };
 
@@ -456,6 +455,16 @@
    * @param {string} parentPath - 路径前缀，如 "/products/"
    * @returns {Array<{key, icon, emoji, href}>}
    */
+  /**
+   * Resolve a label object to current language string
+   */
+  function resolveLabel(labelObj) {
+    if (!labelObj) return "";
+    if (typeof labelObj === "string") return labelObj;
+    var lang = (document.documentElement && document.documentElement.lang) || "zh-CN";
+    return labelObj[lang] || labelObj.en || labelObj["zh-CN"] || "";
+  }
+
   function buildCategoryItems(categoryKey, parentPath) {
     var cats = _categories[categoryKey] || [];
     var result = [];
@@ -463,6 +472,7 @@
       var cat = cats[i];
       result.push({
         key: cat.i18nKey || cat.key || ("nav_" + categoryKey + "_" + cat.slug),
+        label: resolveLabel(cat.label) || cat.i18nKey || cat.slug,
         icon: cat.icon || "circle",
         emoji: cat.emoji || "",
         href: parentPath + cat.slug + "/",
@@ -478,58 +488,121 @@
   function getMenuItems() {
     if (cachedMenuItems) return cachedMenuItems;
 
-    // 从 SITE_CONFIG.categories 构建产品/行业/支持的子菜单
+    // 从 SITE_CONFIG.categories 构建产品子菜单
     var productChildren = buildCategoryItems("products", "/products/");
-    var applicationChildren = buildCategoryItems("applications", "/applications/");
-    var supportChildren = buildCategoryItems("support", "/support/");
 
-    var items = [
+    // 从 SITE_CONFIG.nav 获取导航定义（保证与桌面端一致）
+    var navFromConfig = [];
+    try {
+      var cfgItems = window.SITE_CONFIG && window.SITE_CONFIG.nav && window.SITE_CONFIG.nav.items;
+      if (cfgItems && cfgItems.length > 0) {
+        navFromConfig = cfgItems.map(function (item) {
+          var label = typeof item.label === "object"
+            ? (item.label["zh-CN"] || item.label.en || item.id)
+            : item.label || item.id;
+          var mapped = {
+            key: item.i18nKey || ("nav_" + item.id),
+            label: label,
+            href: item.href || ("/" + item.id + "/"),
+            id: item.id,
+            icon: item.icon || "link",
+            children: [],
+          };
+          if (item.children && item.children.length > 0) {
+            mapped.children = item.children.map(function (child) {
+              var childLabel = typeof child.label === "object"
+                ? resolveLabel(child.label)
+                : child.label || child.id;
+              return {
+                key: child.i18nKey || ("nav_" + child.id),
+                label: childLabel,
+                href: child.href || ("/" + child.id + "/"),
+                id: child.id,
+                icon: child.icon || "arrow_forward",
+                emoji: child.emoji || "",
+              };
+            });
+          }
+          return mapped;
+        });
+      }
+    } catch (e) { /* fall through to hardcoded defaults */ }
+
+    var items = navFromConfig.length > 0 ? navFromConfig : [
+      // CANONICAL_NAV_ITEMS-based fallback — matches navigator.js canonical order
+      {
+        key: "nav_solutions",
+        label: "Solutions",
+        href: "/solutions/",
+        id: "solutions",
+        icon: "lightbulb",
+        children: [
+          { key: "nav_oem", label: "OEM", icon: "precision_manufacturing", emoji: "", href: "/solutions/oem/" },
+          { key: "nav_odm", label: "ODM", icon: "design_services", emoji: "", href: "/solutions/odm/" },
+          { key: "nav_obm", label: "OBM", icon: "verified", emoji: "", href: "/solutions/obm/" },
+          { key: "nav_rd", label: "R&D & Flavor Lab", icon: "science", emoji: "", href: "/solutions/rd/" },
+          { key: "nav_packaging", label: "Packaging & Labeling", icon: "inventory", emoji: "", href: "/solutions/packaging/" },
+        ],
+      },
       {
         key: "nav_products",
-        label: "产品中心",
+        label: "Products",
         href: "/products/",
         id: "products",
-        icon: "kitchen",
+        icon: "inventory_2",
         children: productChildren,
       },
       {
-        key: "nav_applications",
-        label: "行业场景",
-        href: "/applications/",
-        id: "applications",
-        icon: "apps",
-        children: applicationChildren,
-      },
-      { key: "nav_cases", label: "真实案例", href: "/cases/", id: "cases", icon: "cases", children: [] },
-      {
-        key: "nav_profit_calculator",
-        label: "投资回报",
-        href: "/profit-calculator/",
-        id: "profit-calculator",
-        icon: "calculate",
-        children: [],
-      },
-      {
-        key: "nav_support",
-        label: "服务支持",
-        href: "/support/",
-        id: "support",
-        icon: "support_agent",
-        children: supportChildren,
-      },
-      {
-        key: "nav_about",
-        label: "关于我们",
-        href: "/about/",
-        id: "about",
-        icon: "info",
+        key: "nav_manufacturing",
+        label: "Manufacturing",
+        href: "/manufacturing/",
+        id: "manufacturing",
+        icon: "factory",
         children: [
-          { key: "nav_about_profile", icon: "apartment", emoji: "", href: "/about/#profile" },
-          { key: "nav_about_factory", icon: "factory", emoji: "", href: "/about/#factory" },
-          { key: "nav_about_cert", icon: "verified", emoji: "", href: "/about/#cert" },
+          { key: "nav_bases", label: "4 Production Bases", icon: "factory", emoji: "", href: "/manufacturing/#bases" },
+          { key: "nav_quality", label: "Quality Control", icon: "verified", emoji: "", href: "/manufacturing/#quality" },
+          { key: "nav_smart", label: "Smart Factory", icon: "precision_manufacturing", emoji: "", href: "/manufacturing/#smart" },
+          { key: "nav_supplychain", label: "Global Supply Chain", icon: "public", emoji: "", href: "/manufacturing/#supplychain" },
         ],
       },
-      { key: "nav_contact", label: "联系我们", href: "/contact/", id: "contact", icon: "mail", children: [] },
+      {
+        key: "nav_compliance",
+        label: "Compliance",
+        href: "/compliance/",
+        id: "compliance",
+        icon: "verified_user",
+        children: [
+          { key: "nav_certs", label: "Global Certifications", icon: "verified_user", emoji: "", href: "/compliance/#certs" },
+          { key: "nav_halal", label: "Halal Certified", icon: "assured_workload", emoji: "", href: "/compliance/#halal" },
+          { key: "nav_coa", label: "Lab Reports & COA", icon: "description", emoji: "", href: "/compliance/#coa" },
+        ],
+      },
+      {
+        key: "nav_resources",
+        label: "Resources",
+        href: "/resources/",
+        id: "resources",
+        icon: "menu_book",
+        children: [
+          { key: "nav_catalog", label: "2026 Product Catalog", icon: "menu_book", emoji: "", href: "/resources/catalog/" },
+          { key: "nav_whitepapers", label: "Whitepapers", icon: "article", emoji: "", href: "/resources/whitepapers/" },
+          { key: "nav_cases", label: "Case Studies", icon: "analytics", emoji: "", href: "/cases/" },
+          { key: "nav_videos", label: "Video Library", icon: "play_circle", emoji: "", href: "/resources/videos/" },
+        ],
+      },
+      {
+        key: "nav_contact",
+        label: "Contact",
+        href: "/contact/",
+        id: "contact",
+        icon: "mail",
+        children: [
+          { key: "nav_quote", label: "Get a Quote", icon: "request_quote", emoji: "", href: "/contact/#quote" },
+          { key: "nav_samples", label: "Free Samples", icon: "redeem", emoji: "", href: "/contact/#samples" },
+          { key: "nav_visit", label: "Visit Our Factory", icon: "tour", emoji: "", href: "/contact/#visit" },
+          { key: "nav_network", label: "Global Sales Network", icon: "language", emoji: "", href: "/contact/#network" },
+        ],
+      },
     ];
 
     cachedMenuItems = items;
@@ -606,7 +679,7 @@
       '<span class="mobile-menu-l2-label" data-i18n="' +
       escapeHtml(child.key) +
       '">' +
-      escapeHtml(child.key) +
+      escapeHtml(child.label || child.key) +
       "</span>" +
       (child.emoji ? '<span class="mobile-menu-l2-emoji">' + escapeHtml(child.emoji) + "</span>" : "") +
       badgeHtml +
@@ -640,18 +713,7 @@
           '<span class="mobile-menu-l2-icon">' +
           '<span class="material-symbols-outlined">grid_view</span>' +
           "</span>" +
-          '<span class="mobile-menu-l2-label" data-i18n="nav_mega_view_all">查看全部产品</span>' +
-          "</a>";
-      }
-
-      // applications 分类末尾追加「查看全部行业场景」链接
-      if (item.id === "applications") {
-        subMenuHtml +=
-          '<a class="mobile-menu-l2-item mobile-menu-l2-viewall" href="/applications/">' +
-          '<span class="mobile-menu-l2-icon">' +
-          '<span class="material-symbols-outlined">grid_view</span>' +
-          "</span>" +
-          '<span class="mobile-menu-l2-label" data-i18n="nav_applications_view_all">查看全部行业场景</span>' +
+          '<span class="mobile-menu-l2-label" data-i18n="nav_mega_view_all">View All Products</span>' +
           "</a>";
       }
 
@@ -713,7 +775,7 @@
       '<span class="material-symbols-outlined">mail</span>' +
       '<span data-i18n="btn_contact_us">Contact Us</span>' +
       "</a>" +
-      '<a class="mobile-menu-cta-btn primary" href="/quote/" data-nav="/quote/">' +
+      '<a class="mobile-menu-cta-btn primary" href="/contact/" data-nav="/contact/">' +
       '<span class="material-symbols-outlined">request_quote</span>' +
       '<span data-i18n="nav_get_quote">Get Quote</span>' +
       "</a>" +
