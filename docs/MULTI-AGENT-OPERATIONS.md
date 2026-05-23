@@ -1273,10 +1273,375 @@ npm run lint:all 2>/dev/null | tail -5              # 快速 lint
 
 ---
 
+
+## 12. 子 Agent 质量保障 🔴
+
+> **原则：子 agent 的代码质量 = 主 agent 的任务描述质量。描述不清晰，输出必然不可靠。**
+
+### 12.1 子 Agent 常见失败模式
+
+| 失败模式 | 表现 | 根因 | 预防 |
+|---------|------|------|------|
+| **绕圈圈** | 反复尝试相同错误，5 分钟无产出 | 任务太大/太模糊，模型无从下手 | 拆到最小单元 + 给代码模板 |
+| **答非所问** | 写了一堆相关代码但没完成指定任务 | 任务描述缺少具体可验证的结果定义 | 必须包含"验证方法"，说清"做完后怎么确认对了" |
+| **过度修改** | 改了任务外的文件或不该改的逻辑 | 约束不明确，"禁止改"列表不完整 | 明确列出禁止修改的文件清单 |
+| **打补丁式修复** | 只修了表面症状，根因未解决 | 任务没有要求分析根因 | 任务描述必须包含"确认根因"步骤 |
+
+### 12.2 预防绕圈圈和答非所问的黄金法则
+
+#### 法则 1：任务必须可验证 🔴
+
+每个子 agent 任务必须包含"完成后你怎么确认做对了"的方法：
+
+```text
+❌ 错误: "修复导航栏样式"
+✅ 正确: "修复导航栏在 mobile 768px 断点下 dropdown 不显示的问题。
+   验证: 打开 Chrome DevTools 切换到 375px 宽度，点击 'Products' 菜单，
+   dropdown 应该展开且可见。"
+
+❌ 错误: "优化产品列表性能"
+✅ 正确: "将 product-grid.js 中 renderProducts() 的 innerHTML 拼接改为
+   DocumentFragment 构建。验证: node -c 语法通过 + 页面加载时产品列表
+   渲染时间 < 200ms（用 console.time 测量）"
+```
+
+#### 法则 2：最小可验证单元 🔴
+
+| 任务复杂度 | 拆法 | 示例 |
+|-----------|------|------|
+| 改一个函数 | 直接派发给 1 个子 agent | `fix(nav): 修复 mobile menu close 按钮不响应` |
+| 改 2-3 个文件 | 串行派发，一个完成再派下一个 | 先改 JS 模块，再改 HTML 模板 |
+| 改 >3 个文件 | 拆分为子任务序列，每个 1-2 文件 | 步骤 A: 改 API → 步骤 B: 改 UI → 步骤 C: 改测试 |
+| UI 设计方案 | 主 agent 先在文档定方案，子 agent 只执行 | 见 §13 |
+| 跨模块功能 | 主 agent 先出接口定义，子 agent 实现具体模块 | 定义好函数签名/事件名/数据格式再派发 |
+
+#### 法则 3：给代码模板，不给文字描述 🔴
+
+对于复杂的逻辑修改，**直接给代码模板**比写文字描述有效 10 倍：
+
+```text
+❌ 文字描述（容易误解）:
+"在 products 页面添加一个过滤按钮，点击后按类别筛选产品列表"
+
+✅ 代码模板（精确无误）:
+"在 src/assets/js/product-grid.js 的第 85 行 afterRender 函数中，
+在 return 之前插入以下代码:
+
+```
+function addCategoryFilter() {
+  var container = document.getElementById('filter-bar');
+  if (!container) return;
+  var html = '<button data-filter="all" class="filter-btn active">All</button>';
+  cfg.products.forEach(function(cat) {
+    html += '<button data-filter="' + cat.slug + '" class="filter-btn">'
+      + cat.label + '</button>';
+  });
+  container.innerHTML = html;
+  bindFilterEvents();
+}
+```
+
+验证: node -c src/assets/js/product-grid.js"
+```
+
+### 12.3 补丁式修复 vs 根因修复 🔴
+
+子 agent 必须能区分"对症治疗"和"根治"。主 agent 在派发修复任务时明确要求：
+
+```text
+### 修复要求
+- 🎯 根因分析（必填）: 这个问题为什么发生？是逻辑错误、边界条件缺失、还是配置遗漏？
+- 🩹 禁止的补丁方案: 加 try/catch 吞掉错误、加 setTimeout 延时绕过、加 if 判空不解决根本
+- ✅ 根治方案: 修复判断逻辑、补全边界条件、修正数据源
+```
+
+**根因分析的三种方法**:
+
+| 方法 | 适用场景 | 具体做法 |
+|------|---------|---------|
+| **调用链追溯** | JS 函数执行不符合预期 | `console.trace()` 或打断点，看谁调了谁 |
+| **数据流分析** | 显示的值不对 | 从渲染处往回追数据来源：render → model → fetch → API |
+| **最小复现排除** | 偶现 bug 或环境相关 | 逐步注释代码直到问题消失，定位具体行 |
+
+### 12.4 子 Agent 产出验收标准 🔴
+
+| 检查项 | 方法 | 通过标准 | 失败处理 |
+|--------|------|---------|---------|
+| **范围检查** | `git diff dev --name-only <分支>` | 只改了声明范围内的文件 | 超出 → 丢弃分支，重派 |
+| **语法检查** | `node -c <每个改动的.js文件>` | 零错误 | 语法错误 → 丢弃分支，重派 |
+| **Lint 检查** | `npm run lint:all 2>&1 \| grep -E "error" \| grep -v tests/` | 零 error | 有 error → 主 agent 修复或重派 |
+| **结构检查** | 看 diff 内容是否符合任务描述 | 逻辑正确，不是强行拼凑 | 答非所问 → 丢弃，改进描述重派 |
+| **冲突标记** | `grep -rn "^<<<<<<<\\\|^=======\\\|^>>>>>>> " src/ 2>/dev/null` | 无输出 | 有残留 → 立即修复 |
+| **构建检查** | `npm run build:dev` | 成功退出 | 失败 → 主 agent 诊断后重派 |
+
+**丢弃分支的标准操作**:
+```bash
+git branch -D dev-feat-xxx
+git push origin --delete dev-feat-xxx
+```
+
+### 12.5 子 Agent 三种失效状态及处理 🔴
+
+| 状态 | 判断方法 | 处理 |
+|------|---------|------|
+| **卡住（无进展）** | `sessions_history(sessionKey) \| tail -20` 看最后一条 | 直接 kill，主 agent 自行写代码 |
+| **跑偏（方向错）** | 看 diff 内容是否与任务描述一致 | kill → git branch -D → 改进描述重派 |
+| **语法错** | `node -c` 报语法错误 | 子 agent 自己修 => 修不好则 kill，主 agent 修 |
+
+**核心判断**: 同一个子 agent 连续失败 2 次 → **不再重派给子 agent**，主 agent 自行完成。
+
+---
+
+## 13. 复杂任务与 UI 设计方案处理 🔴
+
+### 13.1 什么算复杂任务（不可直接派发）
+
+| 类型 | 判断标准 |
+|------|---------|
+| **跨 3+ 模块** | 改动涉及 3 个以上独立 JS 模块 |
+| **UI 设计方案** | 需要决定颜色、布局、交互方式 |
+| **架构变更** | 新增/删除 JS 模块、修改模块间通信方式 |
+| **配置结构变更** | 修改 `site.config.js` / `webpack.config.js` |
+| **数据模型变更** | 修改 `product-data-table.js` 的结构 |
+
+### 13.2 UI 设计方案的标准流程
+
+```
+主 agent                                         子 agent
+  │                                                  │
+  ├─ ① 需求分析 ──────────────────────────────────── │
+  │    └─ 明确: 什么页面? 什么断点? 什么交互?         │
+  │                                                   │
+  ├─ ② 设计方案 ─────── (主 agent 独立完成) ──────── │
+  │    ├─ 参考现有 UI 风格（品牌色、间距、字体）       │
+  │    ├─ 确定 DOM 结构和 CSS 类名                    │
+  │    ├─ 确定交互逻辑（click/hover/scroll）           │
+  │    └─ 输出设计文档                                │
+  │                                                   │
+  ├─ ③ 拆分为子任务 ──────────────────────────────── │
+  │    ├─ Task A: HTML 模板（1 个子 agent）            │
+  │    ├─ Task B: JS 逻辑（1 个子 agent）              │
+  │    └─ Task C: CSS 样式（1 个子 agent）             │
+  │                                                   │
+  ├─ ④ 派发执行 ── (子 agent 严格按方案执行) ────── │
+  │                                                   │
+  └─ ⑤ 验收合并 ──────────────────────────────────── │
+       └─ 验证: 视觉 + 交互 + 响应式
+```
+
+### 13.3 UI 设计方案模板
+
+```markdown
+### UI 设计方案: [组件/页面名称]
+
+### 参考基准
+- 项目品牌色: `#2E7D32` (primary)
+- Tailwind 断点: `<768 / 768-1279 / >=1280`
+- 字体: Public Sans (自托管)
+- 图标: Material Symbols Outlined
+
+### DOM 结构
+```html
+<!-- PC 版 -->
+<section class="fullwidth-bg py-16 bg-white">
+  <div class="section-content">
+    <h2 class="text-2xl font-bold">标题</h2>
+    <div class="grid grid-cols-3 gap-6">
+      <!-- 卡片由 JS 动态渲染 -->
+    </div>
+  </div>
+</section>
+```
+
+### 交互逻辑
+| 元素 | 事件 | 行为 |
+|------|------|------|
+| 卡片上的 "了解更多" 按钮 | click | scroll 到详情区域 / 打开弹窗 |
+| 筛选按钮 | click | 重新渲染产品列表（data-filter 属性驱动） |
+
+### JS 接口
+```javascript
+function renderNewComponent(container, data) {
+  // container: DOM 元素
+  // data: 来自 SITE_CONFIG 的数据
+}
+```
+
+### 无需子 agent 决策的事项
+- ❌ 颜色方案: 使用项目已有的品牌色
+- ❌ 字体: 使用项目已有的 Public Sans
+- ❌ 间距体系: 使用 Tailwind 预设值
+- ❌ 响应式策略: 按照已有的断点
+```
+
+### 13.4 跨模块接口先行原则
+
+```text
+### 任务前 — 主 agent 定义接口
+
+### 模块间通信定义
+- 事件名: `products:filter-changed`
+- 事件数据: `{ category: string, filters: object }`
+- 监听方: product-grid.js + cross-sell.js
+
+### 数据格式
+```javascript
+var filterState = {
+  category: 'coffee',
+  priceRange: [0, 100],
+  sortBy: 'popular'
+}
+```
+
+### 每个模块的职责
+| 模块 | 职责 | 文件 |
+|------|------|------|
+| filter-bar.js | 渲染筛选 UI，派发事件 | `src/assets/js/ui/filter-bar.js` |
+| product-grid.js | 监听事件，重新渲染 | `src/assets/js/product-grid.js` |
+
+===
+子 agent 严格按照上述接口实现，不跨模块修改。
+```
+
+---
+
+## 14. 主 Agent 代码评审流程 🔴
+
+> **主 agent 在合并子 agent 的代码前，必须执行代码评审。不是可选项。**
+
+### 14.1 评审清单
+
+```bash
+# ── [A] 范围评审 ──
+git diff dev --name-only <branch>
+# ❌ 改了预期外的文件？
+# ❌ 改了不该改的配置文件？
+
+# ── [B] 逻辑评审 ──
+git diff dev <branch> -- src/assets/js/<修改的文件>
+# ❌ 加了 try/catch 吞错误？ → 应该修根因
+# ❌ 加了 setTimeout 延迟绕过？ → 应该修事件顺序
+# ❌ 用 !!(expr) 强行转 bool？ → 应该修判断逻辑
+# ❌ 改了 CSS 类名没同步 HTML？ → 应该同步
+
+# ── [C] 规范评审 ──
+# ❌ ES5 语法?（没有 const/let/箭头函数/模板字符串）
+# ❌ IIFE 模式?（(function() { "use strict"; ... })()）
+# ❌ Config Bridge?（var _cfg = window.SITE_CONFIG || {}）
+# ❌ 硬编码品牌色/URL?
+
+# ── [D] 安全评审 ──
+# ❌ innerHTML 注入未经转义？
+# ❌ CSP 兼容？没用内联 onclick/onsubmit？
+
+# ── [E] 评审结论 ──
+# ✅ PASS — 符合标准，可以合并
+# ⚠️  MINOR — 有小问题，主 agent 自行修复后合并
+# 🔴 FAIL — 严重问题，丢弃分支重派
+```
+
+### 14.2 评审后处理
+
+| 结论 | 处理 |
+|------|------|
+| ✅ PASS | 正常合并到基线 |
+| ⚠️ MINOR（1-2 处小问题） | 主 agent 直接在 dev 上修，不经过子 agent |
+| 🔴 FAIL（逻辑/规范/范围越界） | 丢弃分支，改进描述重派或主 agent 自行完成 |
+
+### 14.3 评审效率建议
+
+| 场景 | 建议 |
+|------|------|
+| 子 agent 改 1-2 个文件 | 逐行阅读 diff |
+| 子 agent 改 3-5 个文件 | 抽查关键逻辑 + 全量语法/lint 检查 |
+| 子 agent 改 5+ 个文件 | ❌ 任务太大，下次应拆分 |
+| 首次合作的子 agent | 必须逐行评审 |
+| 涉及 innerHTML 的修改 | 重点评审转义 |
+| 涉及 site.config.js | 查反向依赖表 |
+
+---
+
+## 15. 子 Agent 回收与兜底策略 🔴
+
+### 15.1 正常回收流程
+
+```text
+子 agent 完成
+    │ 通知: "✅ 完成 | commit: abc123 | 改动: file.js"
+    ▼
+主 agent 收到通知
+    │
+    ├── ① 产出校验（§12.4）
+    │     ├─ 范围正确？
+    │     ├─ 语法正确？
+    │     ├─ lint 通过？
+    │     └─ 结构合理？
+    │
+    ├── ② 代码评审（§14）
+    │     ├─ PASS → 合并
+    │     ├─ MINOR → 主 agent 修
+    │     └─ FAIL → 丢弃重派
+    │
+    ├── ③ 合并到基线
+    │     ├─ git checkout scaffold/v1.0
+    │     ├─ git merge --ff-only dev-feat-xxx
+    │     └─ git push origin scaffold/v1.0
+    │
+    └── ④ 清理 worktree
+          ├─ git worktree remove ../BrewYuKoLi-xxx --force
+          └─ git branch -D dev-feat-xxx
+```
+
+### 15.2 超时兜底
+
+| 超时时间 | 处理 |
+|---------|------|
+| 1 分钟无消息 | 不处理（预热时间） |
+| 3 分钟无产出文件 | `find ../BrewYuKoLi-xxx -name "*.js" -mmin -3` 检查 |
+| 5 分钟无产出（卡住） | `subagents(action=kill, target=...)` → 主 agent 自行完成 |
+| 10 分钟仍在运行 | `sessions_history(sessionKey)` 查看日志 |
+
+**卡住 vs 慢**:
+```
+慢    = 还在输出有意义的 log
+卡住  = 同样的 log 重复 3 次以上 / 开始答非所问 / 开始问人类问题
+```
+
+### 15.3 产出不可用的处理
+
+```bash
+# 步骤 1: kill 子 agent
+subagents(action=kill, target=dev-feat-xxx)
+
+# 步骤 2: 丢弃分支
+git branch -D dev-feat-xxx
+git push origin --delete dev-feat-xxx
+
+# 步骤 3: 记录失败原因
+echo "2026-05-23: Agent dev-feat-xxx 失败 - 任务描述不精确,
+没有给出行号范围, 子 agent 无法定位" >> docs/AGENT-FAILURE-LOG.md
+
+# 步骤 4: 改进后重派 或 主 agent 自行完成
+# 连续失败 2 次 → 主 agent 自行完成
+```
+
+### 15.4 主 Agent 自行完成的标准
+
+| 场景 | 自行完成? |
+|------|----------|
+| 子 agent 连续失败 2 次 | ✅ 立即自行完成 |
+| 子 agent 卡住超过 5 分钟 | ✅ kill 后自行完成 |
+| 单文件简单修改（<50 行） | ✅ 不经过子 agent |
+| 涉及项目配置变更 | ✅ 主 agent 更熟悉配置结构 |
+| 修复 pre-commit/pre-push hook 问题 | ✅ 主 agent 更熟悉工具链 |
+
+---
+
 ## 修订历史
 
 | 版本 | 日期 | 变更 | 作者 |
 |------|------|------|------|
 | v1.0-draft | 2026-05-23 | 初稿 | AI Agent |
-| v1.1-draft | 2026-05-23 | 重写 §8 标准提交流程：本地提交→验证→rebase→push 完整规范 + 禁止操作 + 误操作恢复 | AI Agent |
-| v1.2-draft | 2026-05-23 | 新增 §8.4 feature 分支合入基线规范: 推送链路 + 合入流程 + 实际落地案例 + 多分支合并顺序 | AI Agent |
+| v1.1-draft | 2026-05-23 | 重写 §8 标准提交流程 | AI Agent |
+| v1.2-draft | 2026-05-23 | 新增 §8.4 合入基线规范 | AI Agent |
+| v2.0-draft | 2026-05-23 | 新增 §12-§15: 质量保障 + 复杂任务与UI + 代码评审 + 回收兜底 | AI Agent |
