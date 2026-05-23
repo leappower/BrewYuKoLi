@@ -15,7 +15,7 @@
 5. [代码修改影响矩阵](#5-代码修改影响矩阵)
 6. [构建产物与缓存规范](#6-构建产物与缓存规范)
 7. [并行修改冲突预防](#7-并行修改冲突预防)
-8. [Git 危险操作与防护规范](#8-git-危险操作与防护规范) ← **新增：commit/push/reset/merge 校验**
+8. [标准提交流程规范](#8-标准提交流程规范) ← **重写：完整流程 本地提交→验证→rebase→push**
 9. [风险操作清单](#9-风险操作清单)
 10. [常见问题场景](#10-常见问题场景)
 11. [附录](#11-附录) ← **一键检查脚本 + 定时回复异常处理**
@@ -561,139 +561,298 @@ refactor/extract-config-bridge
 
 ---
 
-## 8. Git 危险操作与防护规范 🔴
+## 8. 标准提交流程规范 🔴
 
-> **最重要的一条：任何 Git 操作（commit/push/reset/merge/checkout）执行前必须校验当前状态，确认无误再操作。**
+> **任何代码变更必须经历：本地提交 → 全部验证通过 → rebase 同步远端 → 处理异常与冲突直至 rebase 结束 → push（不使用 --force/--no-verify）**
 
-### 8.1 Commit 前校验清单 🔴
+### 8.1 总体流程 🔴
 
 ```
-每次执行 git add + git commit 前，必须依次完成：
+┌─────────────────────────────────────────────────────────────┐
+│ ① 代码变更完成                                              │
+│    ├── 汇总所有修改, 按主题分组为逻辑独立的 commit             │
+│    └── 确保工作区干净 (git status --porcelain)                │
+├─────────────────────────────────────────────────────────────┤
+│ ② 本地提交 + 全部验证通过                                    │
+│    ├── JS 语法检查  (node -c <所有改动的.js文件>)              │
+│    ├── CSS 检查    (stylelint / npx htmlhint)                │
+│    ├── HTML 检查   (htmlhint / 标签闭合 / 脚本标签)            │
+│    ├── Lint 全量    (npm run lint:all)                       │
+│    ├── 功能性检查   (构建验证: npm run build:dev)              │
+│    ├── git add -A + git commit                               │
+│    └── pre-commit hook 自动触发, 失败则必须先修                │
+├─────────────────────────────────────────────────────────────┤
+│ ③ git fetch + git rebase 同步对应 origin 分支                │
+│    ├── git fetch origin <目标分支>                            │
+│    ├── git rebase origin/<目标分支>                           │
+│    ├── 处理所有冲突 (每次解决后验证语法)                       │
+│    └── 直至 rebase 成功完成                                   │
+├─────────────────────────────────────────────────────────────┤
+│ ④ git push (禁止 --force/--no-verify)                       │
+│    ├── git push origin <当前分支>                             │
+│    ├── pre-push hook 自动触发                                 │
+│    └── 失败则修复重试, 绝不用 --no-verify                      │
+└─────────────────────────────────────────────────────────────┘
 ```
+
+### 8.2 标准提交流程分步详解 🔴
+
+#### 8.2.1 代码变更完成 → 汇总分组
 
 ```bash
-# [STEP 1] 确认工作目录是否正确
-pwd
-# 必须在 /Users/chee/Projects/BrewYuKoLi 或其 worktree 下
+# 1. 确认当前工作状态
+git status --short
 
-# [STEP 2] 确认当前分支
-git branch --show-current
-# 必须在正确的 feature 或 dev 分支上
-# 绝对不能误在 master/main 上提交
-
-# [STEP 3] 确认改了什么
+# 2. 查看所有改动的文件
 git diff --stat
-# 只改了预期的文件？有没有额外文件？
 
-# [STEP 4] 确认代码语法正确
-node -c <每个改动的.js文件>
+# 3. 按主题分组: 将改动分为逻辑独立的 commit 组
+#    例如: feat(router), chore(vendor), fix(html), docs(standards)
+#    每组只涉及相关文件, 不可一个 commit 混入多个不相关的主题
 
-# [STEP 5] 确认没有调试残留
-grep -n "console\.log(" <改动的文件> | grep -v "__DEVELOPMENT__"
-grep -n "debug\|DIAGNOSTIC\|TODO\|FIXME" <改动的文件>
+# 4. 如果有新文件, 检查是否应该被 git 追踪
+#    vendor/*.umd.js  → ✅ 需要追踪
+#    dist/            → ❌ 已在 .gitignore
+#    node_modules/    → ❌ 已在 .gitignore
+```
 
-# [STEP 6] 确认没有冲突标记
-grep -n "^<<<<<<< \|^=======\|^>>>>>>> " <改动的文件>
+**分组原则**:
+- 每个 commit 只做一件事。"核心代码"和"第三方库"分开提交
+- 如果修改 100+ 文件的格式化/属性集中变更（如批量加 data-swup-persist）, 可归入同一 commit
+- 修复 pre-existing 的 bug（如 script 标签闭合）应单独备注或并入相关 commit
 
-# [STEP 7] 执行提交
+#### 8.2.2 验证（执行顺序不可改变）
+
+```bash
+# ── [步骤 A] 语法检查（最快, 先排除语法错误）──
+# JS 语法
+node -c src/assets/js/swup-init.js
+node -c <其他改动的.js文件>
+
+# CSS 语法（如修改了样式）
+npx stylelint 'src/assets/css/styles.css' --config .stylelintrc.json 2>&1 | grep -E "error"
+
+# HTML 标签检查
+npx htmlhint src/index.html 2>&1
+
+# JSON 格式（如修改了翻译文件）
+node -e "JSON.parse(require('fs').readFileSync('src/assets/lang/zh-CN-ui.json','utf8'));console.log('JSON OK')"
+
+# ── [步骤 B] Lint 全量（项目中已配置的检查项全部跑）──
+npm run lint:all
+# 关注 errors（必须解决）和 warnings（评估后处理）
+# 以下是常见错误及处理方式:
+#   - "no-undef" "no-unused-vars"       → 项目代码必须修复
+#   - "Unexpected console statement"     → 非调试用途的需条件包裹
+#   - "ES6+ syntax detected"             → 二方/三方库须在 EXCLUDE_FILES 中豁免
+
+# ── [步骤 C] 功能性检查（确保代码能运行）──
+# 构建验证
+git stash  # 如果有未提交的配置相关修改
+git add -A && git stash  # 临时存起来测试干净的 commit 状态
+npm run build:dev  # 确认构建不中断
+git stash pop
+```
+
+**规则**: 步骤 A 未通过 → 不进行步骤 B。步骤 B 有 error → 不进行步骤 C。
+
+#### 8.2.3 staging 并提交
+
+```bash
+# 提交前最终检查
+git status                   # 确认 stage 的是预期文件
+git diff --cached --stat     # 确认 staged 文件范围
+
+# 确保没有遗漏非预期的修改
+# 特别注意以下内容不可进入 commit:
+#   - console.log (未用 __DEVELOPMENT__ 包裹)
+#   - 密码/token/API key
+#   - 调试标记 (TODO, FIXME, DEBUG, DIAGNOSTIC)
+#   - 冲突标记 (<<<<<<<, =======, >>>>>>>)
+#   - 硬编码 URL（应改为 SITE_CONFIG 驱动）
+#   - 硬编码品牌色（应使用 _primary 变量）
+
+# 提交
+cat > /tmp/commit-msg.txt << 'EOF'
+<type>(<scope>): <简短描述>
+
+<详细说明, 说明 why 而非 what>
+
+<各个重要的变更点列表>
+EOF
 git add -A
-git commit -m "type(scope): description"
-# 如果 pre-commit hook 失败 → 修复后重试，不可 --no-verify
+git commit -F /tmp/commit-msg.txt
+
+# 如果 pre-commit hook 失败:
+# 1. 查看失败原因（lint 错误? 语法错误? 调试残留?）
+# 2. 修复代码中的问题
+# 3. 重新 git add + git commit
+# 🔴 绝对禁止: git commit --no-verify
 ```
 
-### 8.2 Push 前校验清单 🔴
+**Commit message 规范**:
+- 第一行: `<type>(<scope>): <50字以内描述>` (见 DEV-STANDARDS.md §2.1)
+- 空一行后写详细说明
+- 列出各个重要的变更点
+- 如果有修复 pre-existing bug, 在 foot 注明确认
+
+#### 8.2.4 git rebase 同步远端
 
 ```bash
-# [STEP 1] 确认分支名
-git branch --show-current
-# 禁止：master, main
-# 允许：dev, feat/*, fix/*, refactor/*, chore/*, dev-feat-*
+# 1. 确认当前工作区干净（所有变更已 commited）
+git status --porcelain
+# 必须为空！有未提交代码时不要 rebase
 
-# [STEP 2] 确认没有 force push 风险
-git push --dry-run origin <current-branch>
+# 2. 选择目标分支
+#    - feature 分支 → rebase 到 dev
+#    - scaffold 分支 → rebase 到对应的 origin/scaffold/*
+#    - 绝对不要 rebase 到不相干的分支
 
-# [STEP 3] 如果 pre-push 失败
-# 🔴 绝对禁止: git push --no-verify
-# ✅ 正确: 修复失败原因 + 再试
+# 3. 拉取目标分支最新
+TARGET_BRANCH="dev"  # 根据实际选择
+git fetch origin $TARGET_BRANCH
 
-# [STEP 4] 推送到远端
-git push origin <current-branch>
-```
+# 4. 执行 rebase
+git rebase origin/$TARGET_BRANCH
 
-### 8.3 Reset/恢复操作前校验 🔴
-
-```bash
-# 🔴 git reset --hard 是非常危险的操作
-# 执行前必须:
-git status --porcelain     # 确认没有未提交的重要修改
-git log -5 --oneline       # 确认要回退到什么位置
-git stash list             # 确认 stash 中没有有价值的内容
-
-# ✅ 安全做法（先备份到文件）
-git show HEAD:path/to/file.js > /tmp/backup-$(date +%s).js
-
-# ✅ 安全的撤销操作
-git checkout -- path/to/file.js  # 撤销单个文件的未暂存修改
-git reset HEAD path/to/file.js   # 取消暂存
-git clean -fd                    # 清理未跟踪文件（无 .gitignore 保护的文件）
-```
-
-### 8.4 Merge 前校验清单 🔴
-
-```bash
-# [STEP 1] 确认目标分支（dev）是最新的
-git fetch origin
-git checkout dev && git pull origin dev
-
-# [STEP 2] 确认要合并的分支是最新的
-git pull origin dev-feat-xxx
-
-# [STEP 3] 确认分支关系
-git log --oneline dev..dev-feat-xxx
-# 确认需要合并的 commit 数合理
-
-# [STEP 4] 如果有冲突风险，先尝试 dry-run
-git merge --no-ff --no-commit dev-feat-xxx
-git merge --abort  # 预览后取消，确认无冲突再实际执行
-
-# [STEP 5] 实际合并
-git merge --no-ff dev-feat-xxx -m "feat: merge dev-feat-xxx"
-# 如果有冲突 → 手动解决后 git add → git merge --continue
-
-# [STEP 6] 合并后必须验证
-node -c src/assets/js/<每个改动的文件>  # 语法
-grep -rn "^<<<<<<< \|^=======\|^>>>>>>> " src/  # 冲突标记
-npm run lint:all && npm test   # 全量检查
-```
-
-### 8.5 Rebase 规则 🔴
-
-```bash
-# 只有在以下场景允许 rebase:
-# - 功能分支 rebase dev（保持线性历史）
-# - 子 agent 的分支 rebase 最新的 dev
+# 5. 处理冲突——完全解决后才继续
+# git rebase 会暂停在每个冲突上:
+#   自动合并 ...
+#   冲突（内容）：合并冲突于 src/file.js
+#   该文件已修改。请修改它然后提交。
 #
-# 🔴 禁止:
-# - rebase 已推送到远端的公共分支（dev/master）
-# - rebase 多人共用的 feature 分支
-
-# ✅ 安全执行:
-git fetch origin
-git checkout dev-feat-xxx
-git rebase origin/dev
-# 如果有冲突 → 手动解决 → git add → git rebase --continue
+#   未命中自动合并；修复后提交所得结果。
 ```
 
-### 8.6 误操作恢复指南 🔴
+**冲突处理流程**:
+
+```bash
+# 查看当前冲突文件
+git status
+# UU = 内容冲突, DU/UA = 修改/删除冲突, AA = 双方都修改
+
+# ── 处理内容冲突 (UU) ──
+# 打开文件, 找到 <<<<<<<, =======, >>>>>>> 标记
+# 保留两边有用的代码, 不要简单取一边
+# 解决后:
+git add <file>
+node -c <file>  # 验证语法
+
+# ── 处理修改/删除冲突 (DU/UA) ──
+# 判断: 文件是否还应存在？
+#   应存在 → git add <file>
+#   不应存在 → git rm <file>
+
+# 解决完毕后, 检查是否还有残留冲突标记:
+grep -rn "^<<<<<<< \|^=======\|^>>>>>>> " src/ 2>/dev/null
+# 必须无输出！
+
+# 继续 rebase
+git rebase --continue
+# 会打开编辑器编写 merge commit message
+# 保持默认或简注冲突类型
+
+# 如果在某个 commit 上反复冲突, 可以用:
+git rebase --skip    # 跳过当前 commit（仅当确认不需要时）
+git rebase --abort   # 放弃整个 rebase, 回到开始前状态
+```
+
+**Rebase 完成标准**:
+- 终端输出 `成功变基并更新 refs/heads/<分支名>`
+- `git status --porcelain` 为空
+- `git log --oneline -5` 显示已应用所有 commit
+
+#### 8.2.5 提交前最终验证 (rebase 后)
+
+```bash
+# rebase 可能引入新的冲突文件, rebase 完成后必须重新验证
+
+# JS 语法检查（所有改动的文件）
+node -c src/assets/js/<file>.js
+
+# 冲突标记残留检查（最重要！）
+grep -rn "^<<<<<<< \|^=======\|^>>>>>>> " src/ 2>/dev/null
+# 任何输出都意味着 rebase 冲突未完全解决, 必须修复
+
+# 快速确认版本正确
+git log --oneline -3
+```
+
+#### 8.2.6 git push
+
+```bash
+# 1. 确认分支名不是 master/main
+git branch --show-current
+
+# 2. dry-run 预检
+# git push --dry-run 是只读的, 不会真的 push
+git push --dry-run origin <current-branch>
+# 这会显示将要推送的内容, 但不实际发送
+
+# 3. 推送
+git push origin <current-branch>
+
+# 4. 如果 pre-push hook 失败:
+# 🔴 绝对禁止: git push --no-verify
+# 🔴 绝对禁止: git push --force
+# ✅ 正确做法:
+#    a. 查看 pre-push 失败原因
+#    b. 修复代码
+#    c. git add → git commit（不要 --amend 已推送的 commit）
+#    d. git push origin <current-branch>
+```
+
+**Pre-push 常见失败原因**:
+| 失败原因 | 处理 |
+|----------|------|
+| 分支保护（push 到 master） | 创建 PR, 不要在 master 上工作 |
+| force push 检测 | 检查是否有 rebase 后需要 force 的情况。如果 feature 分支只有你在用, 可考虑 force, 但**必须先通知其他开发者** |
+| 语法检查失败 | rebase 后的代码可能有残留问题, 修复后重新 commit |
+| Lint 失败 | 同上, 修复后重新 commit |
+| 构建失败 | `npm run build` 失败, 修复后重新 commit |
+
+### 8.3 完整流程速查（一句话版）
+
+```bash
+# 完整的一次提交流程:
+pwd && git branch --show-current             # 确认目录和分支
+git status --short                            # 确认工作区
+git diff --stat                               # 确认改动范围
+node -c src/assets/js/<file>.js               # JS 语法检查
+npm run lint:all | grep -E "^✖|^⚠|error"      # Lint
+npm run build:dev                             # 功能性检查（构建验证）
+git add -A && git commit -m "type(scope):"   # 提交, pre-commit hook 自动触发
+git fetch origin dev                          # 拉取远端
+git rebase origin/dev                         # 变基
+# 如果有冲突 → 解决 → git add → git rebase --continue
+git push --dry-run origin <分支>               # 预检
+git push origin <分支>                         # 推送
+```
+
+### 8.4 禁止操作清单 🔴
+
+| 操作 | 原因 | 替代方案 |
+|------|------|---------|
+| `git push --no-verify` | 绕过所有 pre-push 检查 | 修复检查失败原因后重试 |
+| `git push -f` / `--force` | 破坏远端历史 | `git revert` 回滚; 通知所有人后再考虑 force |
+| `git commit --no-verify` | 绕过 pre-commit 检查 | 修复代码问题后重试 |
+| `git commit --amend` 修改已推送的 commit | 下次 push 需 force | 新 commit 修复, 或 revert 后重新提交 |
+| `git merge dev` 到 feature 分支 | 反向 merge 污染历史 | `git rebase dev` 保持线性历史 |
+| rebase 公共分支 (dev/master) | 破坏多人协作 | 只 rebase 自己的 feature 分支 |
+| `git reset --hard` 未确认状态 | 丢失未提交修改 | 先 `git status` 确认, 备份到文件 |
+
+### 8.5 误操作恢复指南
 
 | 场景 | 恢复命令 | 说明 |
 |------|---------|------|
-| 刚 commit 但发现错了 | `git reset --soft HEAD~1` | 撤销 commit，保留修改 |
-| commit 后还没 push，想丢弃修改 | `git reset --hard HEAD~1` | 彻底丢弃（确认无损失后执行） |
-| 已经 push 的 commit 错了 | `git revert HEAD` | 创建反向 commit，不破坏历史 |
+| 刚 commit 但发现错了 | `git reset --soft HEAD~1` | 撤销 commit, 保留修改 |
+| commit 后还没 push, 想丢弃修改 | `git reset --hard HEAD~1` | 彻底丢弃（确认无损失后执行） |
+| 已经 push 的 commit 错了 | `git revert HEAD` | 创建反向 commit, 不破坏历史 |
 | git reset 后后悔了 | `git reflog` → `git reset --hard <hash>` | reflog 保留 90 天操作记录 |
-| 改文件发现不对，想恢复 | `git checkout -- path/to/file.js` | 丢弃工作区改动 |
+| 改文件发现不对想恢复 | `git checkout -- path/to/file.js` | 丢弃工作区改动 |
 | merge 出错想撤销 | `git merge --abort` | 取消进行中的 merge |
+| rebase 失败想放弃 | `git rebase --abort` | 回到 rebase 前状态 |
+| 错误地 hard reset 了 | `git reflog` 找恢复点 | 只要没被 gc, 可以恢复 |
 
 ---
 
@@ -1003,3 +1162,4 @@ npm run lint:all 2>/dev/null | tail -5              # 快速 lint
 | 版本 | 日期 | 变更 | 作者 |
 |------|------|------|------|
 | v1.0-draft | 2026-05-23 | 初稿 | AI Agent |
+| v1.1-draft | 2026-05-23 | 重写 §8 标准提交流程：本地提交→验证→rebase→push 完整规范 + 禁止操作 + 误操作恢复 | AI Agent |
