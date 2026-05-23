@@ -726,6 +726,55 @@ ls dist/ | wc -l  # 预期 ~509
 - 手动发布时更新 `package.json` 的 `version`
 - 版本号遵循 SemVer：`MAJOR.MINOR.PATCH`
 
+### 7.4 E2E 测试规范（Playwright）🟡
+
+项目使用 Playwright 进行端到端测试，配置见 `playwright.config.js`。
+
+#### 测试运行命令
+
+```bash
+npm run test:e2e              # 无头模式（CI 默认）
+npm run test:e2e:headed       # 有头模式（调试用）
+npm run test:e2e:ui           # Playwright UI 模式
+```
+
+#### 测试文件结构
+
+```
+tests/e2e/
+├── swup-navigation.spec.js     # P0: SWUP 核心导航（骨架屏、SPA、popstate、三屏）
+├── smoke.spec.js               # P0-P1: 首页、语言切换、产品列表
+└── navigator-dropdown.spec.js  # P1: 导航下拉菜单交互
+```
+
+#### P0 级测试覆盖范围（不可跳过）
+
+每次 SWUP/路由相关修改后必须运行 P0 测试：
+
+| 检查项 | 文件 | 覆盖内容 |
+|--------|------|---------|
+| SPA 导航全链路 | swup-navigation.spec.js | `/ → /home/ → /products/ → /contact/` 无 JS 错误 |
+| 骨架屏隐藏 | swup-navigation.spec.js | `#skeleton-overlay[hidden]` 在内容加载后存在 |
+| navigator persist | swup-navigation.spec.js | navigator 不被 SWUP 替换，`data-active` 正确更新 |
+| popstate 回退 | swup-navigation.spec.js | 浏览器返回/前进后内容正确 |
+| 三屏视图 | swup-navigation.spec.js | 1280px / 768px / 375px 下均无 JS 错误 |
+
+#### 补充 smoke.spec.js 覆盖
+
+| 检查项 | 覆盖内容 |
+|--------|---------|
+| 首页加载 | Navigator 可见、产品卡片渲染 |
+| 产品分类页 | product-grid 渲染、从分类导航到详情 |
+| 语言切换 | 中文↔英文切换后文本更新 |
+| SPA 稳定性 | 多页面导航无 JS 错误、无重复事件监听 |
+
+#### 测试运行规则 🔴
+
+1. **修改 SWUP 或骨架屏逻辑后** → 必须运行 `npm run test:e2e` 通过 P0 测试
+2. **新增页面或修改导航结构后** → 补写对应 E2E 测试
+3. **pre-push** → 不强制跑 E2E（防止 CI 超时），但建议本地跑一次
+4. **测试选择器优先用 `data-component` 或 `id`**，避免用可能因样式重构变化的 CSS class
+
 ---
 
 ## 8. 代码审查清单

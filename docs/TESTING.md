@@ -62,7 +62,15 @@ test('describe what is being tested', async ({ page }) => {
 });
 ```
 
-**SWUP 导航等待**: 由于 SWUP 使用异步内容替换，建议在点击导航链接后添加 `waitForTimeout(800)` 或监听 `spa:load` 事件。
+**SWUP 导航等待**: 由于 SWUP 使用异步内容替换，建议在点击导航链接后添加 `waitForTimeout(900)` 或监听 `spa:load` 事件（骨架过渡 350ms + 内容渐入延迟 350ms + 缓冲 100ms = 900ms）。
+
+```javascript
+// 通用 SWUP 导航等待函数
+async function waitForSwupNavigation(page) {
+  await page.waitForSelector('#skeleton-overlay[hidden]', { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(900);
+}
+```
 
 ### Smoke 测试覆盖清单
 

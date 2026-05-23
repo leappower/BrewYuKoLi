@@ -10,7 +10,7 @@ export default defineConfig({
   timeout: 30_000,
 
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: 'http://localhost:3099',
     ignoreHTTPSErrors: true,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
@@ -25,7 +25,7 @@ export default defineConfig({
 
   webServer: {
     command: 'npm run dev',
-    port: 3000,
+    port: 3099,
     reuseExistingServer: !process.env.CI,
     timeout: 30_000,
   },

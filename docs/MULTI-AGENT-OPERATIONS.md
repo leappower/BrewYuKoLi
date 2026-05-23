@@ -1941,11 +1941,28 @@ Angular 明确规定:
 | **Zhipu2（智谱备）** | 同上，不同 Key | 记忆/内部配置 | 主 Key 不可用时做 fallback |
 | **聚光 Juguang** | `https://ai.juguang.chat/v1` | 记忆/内部配置 | 特价通道 + Kuai 不可用时兜底 |
 
-> Key 管理规则:
-> - 所有 Key 存储于记忆/内部配置，不在代码中硬编码
-> - 首次使用前通过 `memory_get path=mll-keys` 获取
-> - 如果 Key 过期，走 MLL 文档中对应的备用 Key
 
+> **Key 管理规则**:
+> - **所有 Key 禁止硬编码到代码中**。Key 存储在 OpenClaw 记忆（`memory_get system="mll-keys"`）或环境变量中
+> - **首次使用前获取 Key**: 主 Agent 执行 `memory_get path=mll-keys` 获取完整 Key 列表。该路径存储所有供应商的 Base URL 和 Key，Agent 只从记忆读取，不写入代码
+> - **Key 取值方法**（以 Agent 可执行的伪代码格式）:
+>   ```javascript
+>   function getApiConfig(provider) {
+>     // 从记忆读取 Key（不硬编码）
+>     var keys = memory_get("mll-keys");
+>     switch (provider) {
+>       case "siliconflow": return { base: keys.siliconflow.baseUrl, key: keys.siliconflow.apiKey };
+>       case "kuai":        return { base: keys.kuai.baseUrl, key: keys.kuai.apiKey };
+>       case "zhipu2":      return { base: keys.zhipu2.baseUrl, key: keys.zhipu2.apiKey };
+>       case "juguang":     return { base: keys.juguang.baseUrl, key: keys.juguang.apiKey };
+>       default: throw new Error("Unknown provider: " + provider);
+>     }
+>   }
+>   ```
+> - **Key 失效处理**: 如果 API 返回 401/403 → 切到备用 Key（同供应商不同 Key，如 Zhipu2 主 Key→备 Key）
+> - **所有 Key 都用完**: 走 Fallback 链切供应商（如 SiliconFlow→Kuai→聚光）
+> - **全链 Key 都不可用**: 报告人类，暂停该任务。不尝试暴力破解、不降级到不安全的供应商
+> - **禁止把 Key 写入 git**: pre-commit hook（`no-secrets`）检查 .env 文件，确保不会被误提交
 #### 模型选型规则（IF-THEN）
 
 | 规则 ID | IF（任务类型） | THEN（模型 + 供应商） | 理由 |

@@ -63,7 +63,7 @@ test.describe('Language Switching', () => {
 
 test.describe('Product Category Pages', () => {
   test('category page loads products', async ({ page }) => {
-    await page.goto('/products/stir-fry');
+    await page.goto('/products/coffee/');
     await page.waitForLoadState('networkidle');
 
     // Skeleton should disappear
@@ -78,7 +78,7 @@ test.describe('Product Category Pages', () => {
   });
 
   test('SPA navigation from category to product detail', async ({ page }) => {
-    await page.goto('/products/stir-fry');
+    await page.goto('/products/coffee/');
     await page.waitForLoadState('networkidle');
 
     // Wait for products to load
@@ -118,7 +118,7 @@ test.describe('SPA Router Stability', () => {
     await page.waitForLoadState('networkidle');
 
     // Category
-    await page.goto('/products/stir-fry');
+    await page.goto('/products/coffee/');
     await page.waitForLoadState('networkidle');
 
     // Back to home
