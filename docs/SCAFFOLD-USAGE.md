@@ -161,77 +161,94 @@ var _primary = ((_theme.colors || {}).primary) || "#2E7D32";
 
 ---
 
-## 4. SPA 路由规范
+## 4. 页面路由规范 (SWUP)
+
+> **架构变更 (2026-05-23)**: 手工编写的 spa-router.js (~1000 行) 已替换为 Swup v4.9.0 + 插件体系。所有 SPA 功能现在由 SWUP 原生处理。
+> 参见 `docs/ARCHITECTURE.md` 和 `src/assets/js/swup-init.js`。
 
 ### 4.1 页面路径约定 🔴
 
-所有页面路径格式为 `/pages/{section}/{page}/index-{device}.html`：
+所有静态页面以三屏形式存在于 `src/pages/` 下：
 
 ```
-/pages/home/index-pc.html
-/pages/products/coffee/index-pc.html
-/pages/solutions/oem/index-pc.html
+src/pages/home/index-pc.html       # PC 首页
+src/pages/home/index-tablet.html     # Tablet 首页
+src/pages/home/index-mobile.html    # Mobile 首页
+src/pages/products/index-pc.html    # 产品列表 PC
+src/pages/solutions/oem/index-pc.html
 ```
 
-SPA router 的 `routes` 对象按此约定配置，例外路径单独列出。
+SWUP 通过 `routeToFetchUrl()` 函数将 SPA 路由路径映射到设备特定文件：
+
+```
+/home/              → /home/index-pc.html   （根据设备宽度选择后缀）
+/products/          → /products/index-pc.html
+/products/coffee/   → /products/coffee/index-pc.html
+/news/detail/       → /news/detail/index-pc.html   （特殊别名）
+```
 
 ### 4.2 设备后缀三屏 🔴
 
-| 设备 | 文件后缀 | 媒体查询 |
+| 设备 | 文件后缀 | 视口宽度 |
 |------|---------|---------|
-| PC | `-pc.html` | `>= 1024px` |
-| Tablet | `-tablet.html` | `768px ~ 1023px` |
+| PC | `-pc.html` | `>= 1280px` |
+| Tablet | `-tablet.html` | `768px ~ 1279px` |
 | Mobile | `-mobile.html` | `< 768px` |
 
-### 4.3 SPA 路由模式 🔴
+### 4.3 SWUP 初始化流程 🔴
 
+```html
+<!-- index.html SPA shell: 依赖加载顺序 -->
+<script defer src="/assets/js/vendor/swup.umd.js"></script>                <!-- ① SWUP 核心 -->
+<script defer src="/assets/js/vendor/swup-head-plugin.umd.js"></script>   <!-- ② head 更新插件 -->
+<script defer src="/assets/js/vendor/swup-scroll-plugin.umd.js"></script> <!-- ③ 滚动管理 -->
+<script defer src="/assets/js/vendor/swup-scripts-plugin.umd.js"></script><!-- ④ 脚本重执行 -->
+<script defer src="/assets/js/vendor/swup-debug-plugin.umd.js"></script>  <!-- ⑤ 调试插件 -->
+<script defer src="/assets/js/swup-init.js"></script>                     <!-- ⑥ 初始化 + 兼容层 -->
 ```
-/foo/              → /pages/foo/index-pc.html   （自动注册路由）
-/products/coffee/  → /pages/products/coffee/index-pc.html  （分类页）
-/products/stirfry/ → /pages/products/detail/index-pc.html  （PDP 产品详情页）
-/coffee/           → /pages/products/coffee/index-pc.html  （自动分类 redirect）
+
+**关键 DOM 结构**:
+```html
+<!-- Navigator (SWUP persist: 跨页面保留) -->
+<navigator data-swup-persist="nav" data-component="navigator" data-active="home"></navigator>
+
+<!-- Skeleton overlay (先于 #spa-content 在 DOM 中，控制渐隐渐入) -->
+<div id="skeleton-overlay">...</div>
+
+<!-- SWUP 容器 (内容替换的目标) -->
+<main id="spa-content"></main>
+
+<!-- Footer (SWUP persist: 跨页面保留) -->
+<footer data-swup-persist="footer" data-component="footer" data-active="home"></footer>
 ```
 
-**自动分类 redirect**：`/beauty/` 裸路径自动映射到 `/pages/products/beauty/index-pc.html`，无需在 routes 中手动注册。
+### 4.4 骨架屏过渡 🔴
 
-### 4.4 竞态保护 🔴
+骨架屏不再使用 `display: none` 瞬切，改用 CSS opacity 过渡：
+
+| 阶段 | 时间 | 效果 |
+|------|------|------|
+| 骨架 fadeOut | 0-350ms | `opacity: 1 → 0`，`ease-out` |
+| 内容 fadeIn | 350-700ms | `opacity: 0 → 1`，`ease-in`，延迟 350ms |
+
+参见 `src/assets/css/skeleton.css` 和 `src/assets/js/swup-init.js` 中的 `hideSkeleton()`。
+
+### 4.5 SpaRouter 兼容层 🟡
+
+旧模块调用的 `SpaRouter.*` API 通过兼容层保留：
 
 ```javascript
-// 所有 SPA 导航使用 navVersion 标记：
-var _navVersion = 0;
-
-function loadRoute(routePath) {
-  var navVersion = ++_self._navVersion;
-  fetch(devicePath, { cache: 'no-store' })
-    .then(function (response) { return response.text(); })
-    .then(function (html) {
-      if (navVersion !== _self._navVersion) {
-        // 过期结果，丢弃
-        _self.hideSkeleton();
-        return;
-      }
-      // ...
-    });
-}
+window.SpaRouter = {
+  navigate: function(path) { swup.navigate(url); },
+  replace:  function(path) { swup.navigate(url, { history: "replace" }); },
+  getCurrentPath: function() { return location.pathname; },
+  _pendingScroll: null,
+};
 ```
 
-### 4.5 SPA 调试日志 🟡
+### 4.6 spa:load 事件兼容 🟡
 
-```javascript
-// 开发环境自动启用，生产环境可通过 SpaRouter.debug = true 开启
-var isDev = window.__DEVELOPMENT__ || location.hostname === "localhost" || location.hostname === "127.0.0.1";
-if (isDev || window.SpaRouter && SpaRouter.debug) {
-  console.log("[SPA]", /* ... */);
-}
-```
-
-### 4.6 SPA 并发页面类型过滤
-
-`cross-sell.js` 中的推荐内容根据当前页面类型过滤：
-
-```javascript
-var pageType = window.__PAGE_TYPE__ || 'products';  // 'solutions' | 'products' | 'detail'
-```
+约 18 个模块监听 `document.addEventListener("spa:load", ...)`，SWUP 在 `page:view` hook 中继续派发此事件以保持兼容。
 
 ---
 

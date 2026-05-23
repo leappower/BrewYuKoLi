@@ -646,16 +646,45 @@ for f in $(grep -roh 'src="[^"]*\.js' dist/ | sed 's/src="//'); do [ ! -f "dist/
 
 ### 6.3 脚本加载顺序 🔴
 
+`src/index.html`（SPA shell）中的 `<script defer>` 顺序即加载顺序。defer 脚本按 DOM 中出现的顺序执行。
+
 ```
-1. site.config.js              ← 必须最先（config 数据）
-2. device-utils.js              ← 设备检测
-3. common.js                    ← 通用工具
-4. lang-registry.js             ← 语言注册
-5. translations.js              ← 翻译引擎
-6. ui/*.js                      ← UI 组件
-7. page-*.js                    ← 页面逻辑
-8. init.js                      ← 最后（依赖所有模块）
+<!-- 顺序: 配置 → 工具 → 语言 → UI 组件 → 页面逻辑 → 路由 -->
+
+1.  site.config.js              ← 必须最先（config 数据）
+2.  utils/dom-utils.js          ← DOM 工具
+3.  utils/device-utils.js       ← 设备检测
+4.  lang-registry.js            ← 语言注册
+5.  translations.js             ← 翻译引擎
+6.  translations-dropdown-template.js ← 语言选择器模板
+7.  ui/dropdown-styles.js       ← dropdown 样式注入
+8.  ui/dropdown-base.js         ← dropdown 基础模块
+9.  ui/*-dropdown.js            ← 各业务 dropdown
+10. ui/navigator.js             ← 主导航
+11. ui/slide-menu.js            ← 移动端侧边栏
+12. ui/search-engine.js         ← 站内搜索
+13. ui/footer.js                ← 底部页脚
+14. ui/floating-actions.js      ← 浮动操作按钮
+15. contacts.js                 ← 联系方式
+16. product-grid.js             ← 产品列表
+17. product-detail.js           ← 产品详情
+18. home-core-products.js       ← 首页核心产品
+19. ui/currency.js              ← 货币/汇率
+─── SWUP 路由引擎（替换 spa-router.js）────
+20. vendor/swup.umd.js          ← SWUP 核心
+21. vendor/swup-head-plugin.umd.js
+22. vendor/swup-scroll-plugin.umd.js
+23. vendor/swup-scripts-plugin.umd.js
+24. vendor/swup-debug-plugin.umd.js
+25. swup-init.js                ← SWUP 初始化 + SpaRouter 兼容层
+─── 页面数据（最后加载，不阻塞渲染）────
+26. breadcrumb.js               ← 面包屑导航
 ```
+
+**规则**:
+- `site.config.js` 必须始终排在最前（所有模块依赖它）
+- 新增脚本时插入到对应类别位置
+- SWUP 相关脚本必须出现在 UI 组件之后（UI 需要先 mount navigator/footer）
 
 ---
 
@@ -1246,3 +1275,59 @@ node scripts/lint-code.js
 3. **改完验证** — `node -c` 验证语法
 4. **不改编译产物** — 禁止修改 `dist/` 目录
 5. **三屏同步** — 修改 JS/CSS 时确认三端 HTML 都受影响
+
+### 11.4 Tailwind 编译产物管理
+
+`src/assets/css/tailwind.css` 由 `npm run build:css` 编译生成，**提交到 git 但不要手动编辑**。
+
+```bash
+# 修改 tailwind 配置后需要重新编译:
+npm run build:css          # 从 tailwind-entry.css 编译
+npm run build:dev          # 重新构建项目
+```
+
+- `src/assets/css/tailwind.css` — 编译产物，git 追踪以便加速部署
+- `src/assets/css/tailwind-entry.css` — 编辑源文件（包含 `@tailwind base/components/utilities` 指令）
+- `tailwind.config.js` — 编辑配置文件（品牌色、间距、字体等）
+
+### 11.5 文件删除规范 🔴
+
+删除任何文件前必须完成以下检查：
+
+```bash
+# 1. 搜索 HTML 引用
+grep -rn "文件名" src/pages/ --include="*.html"
+
+# 2. 搜索 JS 引用
+grep -rn "文件名" src/assets/js/ --include="*.js" | grep -v vendor
+
+# 3. 搜索 CSS 引用
+grep -rn "文件名" src/assets/css/ --include="*.css"
+
+# 4. 确认 webpack / build.sh 中的引用
+grep "文件名" webpack.config.js build.sh build-ssg.js 2>/dev/null
+
+# 5. 检查路由/配置映射
+#    site.config.js 中有没有导航项指向该页面？
+#    routeToFetchUrl() 中有没有映射？
+
+# 所有引用确认删除后方可提交。删除后执行:
+npm run build:dev          # 确保构建不中断
+```
+
+**禁止删除以下文件**:
+- `site.config.js` — 站点配置枢纽
+- `src/index.html` — SPA shell 入口
+- `src/assets/js/vendor/*` — 先确认无页面引用
+
+### 11.6 Node.js / npm 版本管理
+
+| 配置文件 | 用途 | 一致性要求 |
+|---------|------|-----------|
+| `package.json` `engines` | 声明最低版本要求 | `node >=16.0.0`, `npm >=8.0.0` |
+| `.tool-versions` | mise/rtx 自动读取 | 应与 `package.json` engines 一致 |
+
+**规则**:
+- 修改 `package.json` engines 时同步更新 `.tool-versions`
+- 所有开发者使用 `mise` (或 `nvm`) 管理 Node 版本
+- 新增 npm 依赖时先搜索包的健康度（下载量、维护频率、安全审计）

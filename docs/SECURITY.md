@@ -33,9 +33,9 @@ Helmet 强制启用了以下关键 CSP 指令：
 
 | 指令 | 值 | 说明 |
 |------|-----|------|
-| `script-src` | `'self'` `cdn.tailwindcss.com` | 只允许同源脚本和 Tailwind CDN |
+| `script-src` | `'self'` | 只允许同源脚本（Tailwind 已本地编译，无需 CDN） |
 | `script-src-attr` | `'none'` | **完全禁止**内联事件属性（`onclick`、`onsubmit` 等） |
-| `style-src` | `'self'` `'unsafe-inline'` `fonts.googleapis.com` | 允许同源样式和 Google Fonts |
+| `style-src` | `'self'` `'unsafe-inline'` | 允许同源样式（自托管字体，无需外部 CDN） |
 
 #### 内联事件处理器消除（Inline Event Handler Removal）
 
