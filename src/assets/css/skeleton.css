@@ -22,6 +22,13 @@
 /* ───────── 骨架层：文档流中 header 和 footer 之间，独立于 #spa-content ───────── */
 #skeleton-overlay {
   padding-top: var(--nav-height, 65px);
+  /* 渐变过渡: 骨架从 opacity:1 渐隐到 opacity:0, 然后 pointer-events:none 释放交互 */
+  opacity: 1;
+  transition: opacity 0.35s ease-out;
+  pointer-events: auto;
+  /* 确保骨架动画运行时不被内容挡住 */
+  position: relative;
+  z-index: 1;
 }
 @media (min-width: 1024px) {
   #skeleton-overlay {
@@ -29,7 +36,24 @@
   }
 }
 #skeleton-overlay[hidden] {
-  display: none;
+  opacity: 0;
+  pointer-events: none;
+  /* 🌟 不再用 display: none — 用 opacity:0 + pointer-events:none 实现不可见但保留过渡 */
+}
+
+/* ───────── 内容容器 #spa-content 渐入（仅在骨架从 visible→hidden 后触发）───────── */
+#spa-content {
+  opacity: 1;
+}
+/* 骨架可见时: SPA shell 中 (内容空) 保持 opacity:0;
+   SSG 中 (内容有) JS 会立刻 hideSkeleton 不影响. */
+#skeleton-overlay:not([hidden]) ~ #spa-content:empty {
+  opacity: 0;
+}
+/* 骨架隐藏后: 内容渐入 (transition-delay 等待骨架 fadeOut) */
+#spa-content.swup-fade-in {
+  opacity: 1;
+  transition: opacity 0.35s ease-in;
 }
 
 /* ───────── 容器 ───────── */

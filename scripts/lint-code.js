@@ -45,7 +45,7 @@ var FIX_COUNT = 0;
 var STAGED_ONLY = process.argv.indexOf('--staged') !== -1;
 var FIX_MODE = process.argv.indexOf('--fix') !== -1;
 var EXCLUDE_DIRS = ['node_modules', 'dist', '.git', 'vendor', 'scripts'];
-var EXCLUDE_FILES = ['webpack.config.js', 'src/index.js']; // Build tools use ES6+
+var EXCLUDE_FILES = ['webpack.config.js', 'src/index.js', 'vendor/swup.umd.js', 'vendor/swup-head-plugin.umd.js', 'vendor/swup-scroll-plugin.umd.js', 'vendor/swup-scripts-plugin.umd.js', 'vendor/swup-debug-plugin.umd.js']; // Build tools + 3rd-party SWUP UMD use ES6+
 
 // ═══════════════════════════════════════════════════════════
 // Helpers
