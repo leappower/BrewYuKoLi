@@ -1645,3 +1645,95 @@ echo "2026-05-23: Agent dev-feat-xxx 失败 - 任务描述不精确,
 | v1.1-draft | 2026-05-23 | 重写 §8 标准提交流程 | AI Agent |
 | v1.2-draft | 2026-05-23 | 新增 §8.4 合入基线规范 | AI Agent |
 | v2.0-draft | 2026-05-23 | 新增 §12-§15: 质量保障 + 复杂任务与UI + 代码评审 + 回收兜底 | AI Agent |
+
+## 16. 从业界最佳实践汲取的规范建议（评审报告）
+
+> **来源**: Google eng-practices (Code Review), Kubernetes Community (Contributing Guide), Angular (CONTRIBUTING.md), Conventional Commits, Google JS Style Guide
+> **用途**: 这些是外部最佳实践与当前 BrewYuKoLi 规范的对比, 待评审后决定是否纳入
+
+### 16.1 当前规范已经做得好的
+
+| 实践 | 我们的规范 | 对比业界 |
+|------|-----------|---------|
+| Commit message 格式 | DEV-STANDARDS §2.1: `type(scope): desc` | ✅ 与 Angular/Conventional Commits 一致 |
+| Pre-commit/pre-push hooks | lefthook.yml 完整配置 | ✅ 与 Google/K8s 做法一致 |
+| 小而独立的 CL | MULTI-AGENT §3.1: 每个 task 1-2 文件 | ✅ 与 Google "Small CLs" 原则一致 |
+| 代码审查清单 | DEV-STANDARDS §8 + MULTI-AGENT §14 | ✅ 与 Google "What to Look For" 对标 |
+| 根因修复优先 | DEV-STANDARDS §4.9 + §12.3 | ✅ 与 Google 原则一致 |
+
+### 16.2 可以吸收的改进
+
+#### 1️⃣ Review 速度承诺（来自 Google eng-practices）
+
+Google 规定: **一个工作日是 code review 响应的最长时间**。建议增加:
+
+"Feature 分支推送后, 主 agent 应在 1 个工作日内完成代码评审。如果评审未完, 应先给一个初步反馈（设计层面）, 不要让子 agent 干等。
+
+缩短评审周期的技巧:
+- 子 agent 推送后, 主 agent 立即产出校验（5 分钟内完成）"
+- 首次合作的子 agent 必须逐行评审, 合作稳定后可以抽查"
+- 小 CL（<100 行 diff）应在 30 分钟内完成评审"
+
+#### 2️⃣ 评审评论分级（来自 Google Code Review Comments）
+
+Google 使用三种标注前缀区分评论严重程度:
+
+| 前缀 | 含义 | 子 agent 处理方式 |
+|------|------|-----------------|
+| **Nit:** | 小问题, 技术上应该修但影响不大 | 优先级低, 可后续修复 |
+| **Optional / Consider:** | 建议, 不强制 | 主 agent 评估后决定 |
+| **FYI:** | 仅供参考, 不需要在本 CL 中处理 | 忽略即可 |
+
+#### 3️⃣ PR 描述规范（来自 Kubernetes + Google）
+
+当前我们只有 commit message 规范, 缺少 PR 描述规范。Kubernetes 要求每个 PR must contain:
+
+"- 清晰的标题和描述, 解释为什么做这个改动
+- 如果有对应的 issue, 用 `fixes #123` 关联
+- 变更类型的标签（bugfix/feature/refactor/docs）
+- 测试方法说明（如何验证这个改动）
+- 如果有 UI 改动, 附截图"
+
+#### 4️⃣ 小 CL 的量化标准（来自 Google Small CLs）
+
+"- 100 行是一个合理的 CL 大小, 1000 行通常太大"
+"- 分布在 50 个文件上的 200 行改动通常太大"
+
+建议: 补充到 §3.1 任务分解原则中, 将 `1-2 文件` 约束加上行数约束。
+
+#### 5️⃣ 评审中的彬彬有礼（来自 Google Code Review Comments）
+
+"永远评论代码, 不要评论开发者。"
+"Bad: '为什么在这里用线程?'"
+"Good: '这里的并发模型增加了系统复杂度, 但没有带来性能收益。建议改为单线程。'"
+
+#### 6️⃣ 不可直接派发的改造（来自 Angular CONTRIBUTING.md）
+
+Angular 明确规定:
+- `Major Feature: 先开 issue 讨论设计方案, 不要直接写代码`
+- `Micro optimizations: 必须有 benchmark 验证, 否则不接受`
+
+#### 7️⃣ CL 拆分策略（来自 Google Small CLs）
+
+"堆叠多个 CL（stacking）: 先发第一个小 CL 出去 review, 然后立即基于它写第二个"
+"水平拆分: 按技术栈分层拆分（API/client/service/data model）"
+"垂直拆分: 按功能模块垂直拆分（每个模块是完整的小功能）"
+
+#### 8️⃣ 评审加速（来自 Google Speed of Code Reviews）
+
+"如果处于深度编码状态, 不要打断自己去做 review。等编码任务完成后再处理。"
+"快反馈比快通过更重要。即使整个评审需要多轮, 每轮快速响应能大大降低开发者的挫败感。"
+"跨时区场景: 如果评审者和开发者在不同时区, 优先给 LGTM（即使还有未解决的评论）, 避免开发者干等一整天。"
+
+### 16.3 评审后建议的操作
+
+| 建议 | 优先级 | 工作量 | 纳入哪里 |
+|------|--------|--------|---------|
+| 增加 Review 速度承诺（1 个工作日） | 🟡 中 | 小 | MULTI-AGENT §14 |
+| 增加评审评论分级（Nit/Optional/FYI） | 🟡 中 | 小 | MULTI-AGENT §14 |
+| 增加 PR 描述规范 | 🟡 中 | 中 | 新建或融入 DEV-STANDARDS |
+| 增加 CL 行数量化约束（100 行/1000 行） | 🟢 低 | 小 | MULTI-AGENT §3.1 |
+| 增加评审中的礼貌原则 | 🟢 低 | 小 | MULTI-AGENT §14 |
+| 增加 CL 拆分策略指南 | 🟢 低 | 中 | MULTI-AGENT §3 / §13 |
+| Angular 式大功能需先设计方案 | ✅ 已有 | — | MULTI-AGENT §13 已覆盖 |
+| 评审加速策略 | 🟡 中 | 小 | MULTI-AGENT §14 |
