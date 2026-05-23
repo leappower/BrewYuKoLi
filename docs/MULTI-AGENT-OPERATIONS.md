@@ -19,6 +19,12 @@
 9. [风险操作清单](#9-风险操作清单)
 10. [常见问题场景](#10-常见问题场景)
 11. [附录](#11-附录) ← **一键检查脚本 + 定时回复异常处理**
+12. [子 Agent 质量保障](#12-子-agent-质量保障-)
+13. [复杂任务与 UI 设计方案处理](#13-复杂任务与-ui-设计方案处理-) ← **重写：Agent 可执行判定规则**
+14. [主 Agent 代码评审流程](#14-主-agent-代码评审流程-)
+15. [子 Agent 回收与兜底策略](#15-子-agent-回收与兜底策略-)
+16. [从业界最佳实践汲取的规范建议](#16-从业界最佳实践汲取的规范建议评审报告)
+17. [Agent 可执行决策规则全集](#17-agent-可执行决策规则全集-) ← **新增：57 条 if-then 确定性规则**
 
 ---
 
@@ -1394,116 +1400,150 @@ git push origin --delete dev-feat-xxx
 
 ## 13. 复杂任务与 UI 设计方案处理 🔴
 
-### 13.1 什么算复杂任务（不可直接派发）
+> **Agent 执行规则**: 本节所有内容都是「若…则…」的确定性规则, 不含「应该/建议/尽量」类模糊词。
 
-| 类型 | 判断标准 |
-|------|---------|
-| **跨 3+ 模块** | 改动涉及 3 个以上独立 JS 模块 |
-| **UI 设计方案** | 需要决定颜色、布局、交互方式 |
-| **架构变更** | 新增/删除 JS 模块、修改模块间通信方式 |
-| **配置结构变更** | 修改 `site.config.js` / `webpack.config.js` |
-| **数据模型变更** | 修改 `product-data-table.js` 的结构 |
+### 13.1 大功能必须先设计方案（判定规则）
 
-### 13.2 UI 设计方案的标准流程
-
-```
-主 agent                                         子 agent
-  │                                                  │
-  ├─ ① 需求分析 ──────────────────────────────────── │
-  │    └─ 明确: 什么页面? 什么断点? 什么交互?         │
-  │                                                   │
-  ├─ ② 设计方案 ─────── (主 agent 独立完成) ──────── │
-  │    ├─ 参考现有 UI 风格（品牌色、间距、字体）       │
-  │    ├─ 确定 DOM 结构和 CSS 类名                    │
-  │    ├─ 确定交互逻辑（click/hover/scroll）           │
-  │    └─ 输出设计文档                                │
-  │                                                   │
-  ├─ ③ 拆分为子任务 ──────────────────────────────── │
-  │    ├─ Task A: HTML 模板（1 个子 agent）            │
-  │    ├─ Task B: JS 逻辑（1 个子 agent）              │
-  │    └─ Task C: CSS 样式（1 个子 agent）             │
-  │                                                   │
-  ├─ ④ 派发执行 ── (子 agent 严格按方案执行) ────── │
-  │                                                   │
-  └─ ⑤ 验收合并 ──────────────────────────────────── │
-       └─ 验证: 视觉 + 交互 + 响应式
-```
-
-### 13.3 UI 设计方案模板
-
-```markdown
-### UI 设计方案: [组件/页面名称]
-
-### 参考基准
-- 项目品牌色: `#2E7D32` (primary)
-- Tailwind 断点: `<768 / 768-1279 / >=1280`
-- 字体: Public Sans (自托管)
-- 图标: Material Symbols Outlined
-
-### DOM 结构
-```html
-<!-- PC 版 -->
-<section class="fullwidth-bg py-16 bg-white">
-  <div class="section-content">
-    <h2 class="text-2xl font-bold">标题</h2>
-    <div class="grid grid-cols-3 gap-6">
-      <!-- 卡片由 JS 动态渲染 -->
-    </div>
-  </div>
-</section>
-```
-
-### 交互逻辑
-| 元素 | 事件 | 行为 |
-|------|------|------|
-| 卡片上的 "了解更多" 按钮 | click | scroll 到详情区域 / 打开弹窗 |
-| 筛选按钮 | click | 重新渲染产品列表（data-filter 属性驱动） |
-
-### JS 接口
-```javascript
-function renderNewComponent(container, data) {
-  // container: DOM 元素
-  // data: 来自 SITE_CONFIG 的数据
-}
-```
-
-### 无需子 agent 决策的事项
-- ❌ 颜色方案: 使用项目已有的品牌色
-- ❌ 字体: 使用项目已有的 Public Sans
-- ❌ 间距体系: 使用 Tailwind 预设值
-- ❌ 响应式策略: 按照已有的断点
-```
-
-### 13.4 跨模块接口先行原则
+**规则**: 以下 6 种情况任意满足一条 → **禁止直接派发给子 agent**, 必须先主 agent 输出设计文档：
 
 ```text
-### 任务前 — 主 agent 定义接口
+┌─ 是否满足以下任一条件?
+│
+├─ ① 涉及文件 > 3 个模块（JS 文件）
+│     IF 需要改动的文件分散在 ≥3 个独立 JS 模块中
+│     THEN → 先出设计方案, 再拆分派发
+│
+├─ ② 新增 UI 组件
+│     IF 需要新增可见的 UI 元素（按钮/弹窗/卡片/导航项/页脚项）
+│     THEN → 先出 DOM 结构定义和交互逻辑, 再派发
+│
+├─ ③ 修改 site.config.js 的 categories / routes / nav 结构
+│     IF 需要新增/修改/删除 categories、routes 或 nav 配置项
+│     THEN → 先查 SITE-CONFIG.md 反向依赖表, 确认影响范围
+│
+├─ ④ 修改 webpack.config.js / build.sh / tailwind.config.js
+│     IF 需要改构建配置
+│     THEN → 先确认构建流程影响面, 删 dist 重建验证
+│
+├─ ⑤ 新增/删除 JS 文件
+│     IF 需要新增或删除一个 .js 文件
+│     THEN → 先确认: 新文件注册到 index.html? 旧文件有引用? 需删 webpack filter?
+│
+├─ ⑥ 数据模型变更
+│     IF 需要修改 product-data-table.js 或 lang/*.json 的结构
+│     THEN → 先出数据格式定义, 确认所有消费方兼容
+│
+└─ 全部不满足 → 可直接按 §3 派发给子 agent
+```
 
-### 模块间通信定义
-- 事件名: `products:filter-changed`
-- 事件数据: `{ category: string, filters: object }`
-- 监听方: product-grid.js + cross-sell.js
+**Agent 执行的伪代码**:
 
-### 数据格式
 ```javascript
-var filterState = {
-  category: 'coffee',
-  priceRange: [0, 100],
-  sortBy: 'popular'
+// 主 agent 在派发前运行的判断逻辑
+function isComplexTask(taskDescription) {
+  var moduleCount = taskDescription.modules.length;
+  var hasNewUI    = taskDescription.tags.indexOf('new-ui') !== -1;
+  var isConfig    = taskDescription.tags.indexOf('config-change') !== -1;
+  var isBuild     = taskDescription.tags.indexOf('build-change') !== -1;
+  var isNewFile   = taskDescription.tags.indexOf('new-file') !== -1;
+  var isDataModel = taskDescription.tags.indexOf('data-model') !== -1;
+
+  if (moduleCount >= 3)            return true;  // 规则 ①
+  if (hasNewUI)                    return true;  // 规则 ②
+  if (isConfig)                    return true;  // 规则 ③
+  if (isBuild)                     return true;  // 规则 ④
+  if (isNewFile)                   return true;  // 规则 ⑤
+  if (isDataModel)                 return true;  // 规则 ⑥
+  return false;
 }
 ```
 
-### 每个模块的职责
-| 模块 | 职责 | 文件 |
-|------|------|------|
-| filter-bar.js | 渲染筛选 UI，派发事件 | `src/assets/js/ui/filter-bar.js` |
-| product-grid.js | 监听事件，重新渲染 | `src/assets/js/product-grid.js` |
+### 13.2 设计文档必须包含的内容
 
-===
-子 agent 严格按照上述接口实现，不跨模块修改。
+> **规则**: 主 agent 输出的设计文档中, 以下 5 项缺一不可。缺少任何一项 → 不允许派发给子 agent。
+
+```markdown
+## UI 设计方案: <组件名>
+
+### [必填 1] 参考基准
+- 品牌色: 从 site.config.js 读取 (不可硬编码)
+- 字体: Public Sans (自托管, 不可用 Google Fonts CDN)
+- 图标: Material Symbols Outlined (自托管)
+- Tailwind 断点: <768px mobile / 768-1279px tablet / >=1280px pc
+- 三屏策略: 每个断点各一套 HTML（index-{pc,tablet,mobile}.html）
+
+### [必填 2] DOM 结构（包含三屏差异）
+- PC 版: 明确写 HTML 模板, 使用项目已有的 CSS 类名（fullwidth-bg / section-content / py-*）
+- Tablet 版: 如果与 PC 不同则写明不同之处
+- Mobile 版: 如果与 Tablet 不同则写明不同之处
+- 禁止使用的类名: 见 src/assets/css/tailwind.css safelist (不在 safelist 中的类名会被 Tree Shaking 删除)
+
+### [必填 3] 交互逻辑（每个元素的触发条件 + 结果）
+表格格式, 每行一个交互:
+| 触发元素 | 事件类型 | 触发条件 | 执行结果 |
+|----------|---------|---------|---------|
+| 筛选按钮 | click | 用户点击任意 data-filter 按钮 | 重新渲染 product-grid |
+| CTA 按钮 | click | 用户点击 | SpaRouter.navigate('/quote/') |
+
+禁止: 使用内联事件属性（onclick/onsubmit/onkeyup）
+必须: 使用 data-* 属性 + addEventListener
+
+### [必填 4] JS 接口定义
+- 函数签名（函数名 + 参数 + 返回值类型）
+- 事件名（如果使用自定义事件）
+- 数据格式（如果新增数据结构）
+
+### [必填 5] 无需子 agent 决策的事项
+明确列出子 agent 不需要做决定的内容:
+- ❌ 品牌色: 用已有的 _primary 变量
+- ❌ 字体: 用已有的 Public Sans
+- ❌ 间距: 用 Tailwind 预设值
+- ❌ 响应式断点: 用已有的 768/1280
+- ❌ z-index: 用已有的 CSS 变量（--z-drawer/--z-modal/--z-overlay）
 ```
 
----
+### 13.3 设计文档完成后 → 拆分为 Agent 可执行任务
+
+> **规则**: 一个设计文档必须拆分为 ≥1 个子任务。每个子任务对应 1-2 个文件。
+
+```
+设计文档
+    │
+    ├── Task A (1 个子 agent): 实现 HTML 模板
+    │     文件: src/pages/<section>/index-pc.html
+    │     改动: 插入 DOM 结构, 使用已有的 CSS 类名
+    │     禁止: 新增 CSS 类名、改 JS 逻辑、改 site.config.js
+    │
+    ├── Task B (1 个子 agent): 实现 JS 逻辑
+    │     文件: src/assets/js/<模块名>.js
+    │     改动: 按「必填 3」的交互逻辑实现事件绑定
+    │     禁止: 改 HTML、改 CSS、改 site.config.js
+    │
+    └── Task C (1 个子 agent): 实现 CSS 样式（仅当需要新增样式时）
+          文件: src/assets/css/styles.css
+          改动: 在 :root 中添加 CSS 变量, 或在文件中添加样式
+          禁止: 改 HTML、改 JS、改 tailwind.config.js
+```
+
+### 13.4 验收设计实现（主 agent 在合并前必须检查）
+
+```text
+IF sub agent 返回 "完成"
+THEN 主 agent 执行以下检查:
+
+[ ] visual: 打开页面, 新 UI 元素存在且对齐
+[ ] interactive: 点击/悬停, 交互行为符合「必填 3」定义
+[ ] responsive: 在 PC/Tablet/Mobile 断点下都正常
+[ ] no-css-drift: 没有意外的样式偏移（不影响其他页面）
+[ ] config-intact: site.config.js 未被意外修改
+[ ] CSP-compliant: 没有内联 onclick/onsubmit（grep 检查）
+
+IF 任何一项不通过
+THEN → 丢弃分支, 说明不通过项, 重派
+
+IF 全部通过
+THEN → 正常合并
+```
 
 ## 14. 主 Agent 代码评审流程 🔴
 
@@ -1645,6 +1685,7 @@ echo "2026-05-23: Agent dev-feat-xxx 失败 - 任务描述不精确,
 | v1.1-draft | 2026-05-23 | 重写 §8 标准提交流程 | AI Agent |
 | v1.2-draft | 2026-05-23 | 新增 §8.4 合入基线规范 | AI Agent |
 | v2.0-draft | 2026-05-23 | 新增 §12-§15: 质量保障 + 复杂任务与UI + 代码评审 + 回收兜底 | AI Agent |
+| v2.1-draft | 2026-05-23 | 重写 §13: 大功能设计判定规则(6条) + 设计文档5项必填 + 验收清单 + Agent伪代码; 新增 §17: 57条 if-then 确定性决策规则全集 | AI Agent |
 
 ## 16. 从业界最佳实践汲取的规范建议（评审报告）
 
@@ -1737,3 +1778,111 @@ Angular 明确规定:
 | 增加 CL 拆分策略指南 | 🟢 低 | 中 | MULTI-AGENT §3 / §13 |
 | Angular 式大功能需先设计方案 | ✅ 已有 | — | MULTI-AGENT §13 已覆盖 |
 | 评审加速策略 | 🟡 中 | 小 | MULTI-AGENT §14 |
+
+## 17. Agent 可执行决策规则全集 🔴
+
+> **规则**: 本节汇总全文中所有「若…则…」形式的确定性规则。Agent 在执行前应先查本节确认是否存在对应规则。
+> 每一条规则不包含「应该/建议/尽量/酌情/考虑/通常/一般」等模糊词。所有条件（IF）和动作（THEN）都是精确定义的。
+
+### 17.1 任务派发决策
+
+| 规则 ID | IF（条件） | THEN（动作） | 来源 |
+|---------|-----------|-------------|------|
+| F1 | 任务涉及 ≥3 个 JS 模块 | 禁止派发, 先出设计文档 | §13.1 |
+| F2 | 任务新增 UI 组件 | 禁止派发, 先出设计文档 | §13.1 |
+| F3 | 任务改 site.config.js 的 categories/routes/nav | 禁止派发, 先查反向依赖表 | §13.1 |
+| F4 | 任务改 webpack/build.sh/tailwind 配置 | 禁止派发, 先确认构建影响 | §13.1 |
+| F5 | 任务新增/删除 .js 文件 | 禁止派发, 先确认引用链 | §13.1 |
+| F6 | 任务改数据模型（product-data/lang 结构） | 禁止派发, 先出数据格式定义 | §13.1 |
+| F7 | 任务不满足 F1-F6 中的任何一条 | 可直接按 §3 模板派发给子 agent | §13.1 |
+| F8 | 目标文件 >300 行 | 必须先拆分再派发 | §3.1 |
+| F9 | 目标文件 >1000 行 | 绝对串行, 任何时候只能 1 个子 agent 在改 | §3.1 |
+| F10 | 两个任务改同一个文件 | 串行执行, 一个完成后才能派下一个 | §3.1 |
+| F11 | 上次同类型任务子 agent 连续失败 2 次 | 不再重派给子 agent, 主 agent 自行完成 | §12.5 |
+| F12 | 子 agent 5 分钟无产出 | kill → 主 agent 自行完成 | §15.2 |
+
+### 17.2 子 Agent 任务描述规范
+
+| 规则 ID | IF（条件） | THEN（动作） | 来源 |
+|---------|-----------|-------------|------|
+| F13 | 派发任务时 | 任务描述必须包含「验证方法」: 完成后怎么确认做对了 | §12.2 |
+| F14 | 派发复杂逻辑修改时 | 直接给代码模板而非文字描述 | §12.2 |
+| F15 | 派发修复任务时 | 必须包含「根因分析」要求, 明确禁止的补丁方案 | §12.3 |
+| F16 | 派发任务时 | 必须列出「禁止修改的文件」清单 | §3.3 |
+
+### 17.3 子 Agent 执行中的异常处理
+
+| 规则 ID | IF（条件） | THEN（动作） | 来源 |
+|---------|-----------|-------------|------|
+| F17 | pre-commit hook 失败 | 修复代码后重试, 禁止 git commit --no-verify | §9.1 |
+| F18 | pre-push hook 失败 | 修复代码后重试, 禁止 git push --no-verify | §8.4 |
+| F19 | node -c 语法检查失败 | 子 agent 自己修复, 修不好则报告主 agent | §12.5 |
+| F20 | git push 被拒绝（非 fast-forward） | 先 git pull --rebase, 再 git push | §8.4 |
+| F21 | 合并冲突 | 保留两边有用代码, 解决后 node -c 验证语法 | §8.2.4 |
+| F22 | 子 agent 改了任务外的文件 | 丢弃分支, 重新创建, 加强约束后重派 | §12.4 |
+
+### 17.4 合并与推送
+
+| 规则 ID | IF（条件） | THEN（动作） | 来源 |
+|---------|-----------|-------------|------|
+| F23 | 基线合入 feature 分支 | 使用 git merge --ff-only, 禁止 --no-ff | §8.4 |
+| F24 | --ff-only 失败 | 回到 feature 分支 git rebase 基线, 再回来 --ff-only | §8.4 |
+| F25 | 推送时 | 先 git push --dry-run 预检, 再实际推送 | §8.2.6 |
+| F26 | 推送时 | 推送到基线分支（非 feature 分支） | §8.4 |
+| F27 | 推送 feature 分支到远端 | 仅在需要备份时执行, 不是合入 | §8.4 |
+
+### 17.5 代码评审
+
+| 规则 ID | IF（条件） | THEN（动作） | 来源 |
+|---------|-----------|-------------|------|
+| F28 | 子 agent 改 1-2 个文件 | 逐行阅读 diff | §14.3 |
+| F29 | 子 agent 改 3-5 个文件 | 抽查关键逻辑 + 全量语法/lint 检查 | §14.3 |
+| F30 | 子 agent 改 5+ 个文件 | 说明任务太大, 下回拆分 | §14.3 |
+| F31 | 首次合作的子 agent 完成任务 | 必须逐行评审 | §14.3 |
+| F32 | 修改涉及 innerHTML | 重点评审转义（§4.4 innerHTML 安全规范） | §14.3 |
+| F33 | 修改涉及 site.config.js | 查 SITE-CONFIG.md 反向依赖表 | §14.3 |
+| F34 | 评审发现加了 try/catch 吞错误 | FAIL, 退回要求修根因 | §14.1 |
+| F35 | 评审发现加了 setTimeout 延迟绕过 | FAIL, 退回要求修事件顺序 | §14.1 |
+| F36 | 评审发现用了 !!(expr) 强行转 bool | FAIL, 退回要求修判断逻辑 | §14.1 |
+
+### 17.6 构建与部署
+
+| 规则 ID | IF（条件） | THEN（动作） | 来源 |
+|---------|-----------|-------------|------|
+| F37 | 改 .html / .js / .css 文件 | 需重新构建, 不需删 dist | §5.1 |
+| F38 | 改 webpack.config.js | 需删 dist 再重新构建 | §5.2 |
+| F39 | 改 build.sh / build-ssg.js | 需删 dist 再重新构建 | §5.2 |
+| F40 | 改 server.js | 需重启 dev-server, 不需构建 | §5.4 |
+| F41 | 改 tailwind.config.js | 需 npm run build:css 后重启 dev-server | §5.4 |
+| F42 | 新增 npm 依赖 | 需重启 dev-server + 重新构建 | §5.4 |
+
+### 17.7 框架/工具链
+
+| 规则 ID | IF（条件） | THEN（动作） | 来源 |
+|---------|-----------|-------------|------|
+| F43 | 需要在 JS 中获取品牌色 | 从 _cfg.theme.colors.primary 读取, 不硬编码 | SCAFFOLD §3.3 |
+| F44 | 需要在 JS 中获取配置 | IIFE 顶部声明 var _cfg = window.SITE_CONFIG \|\| {} | DEV-STANDARDS §3.1 |
+| F45 | 需要给元素加 z-index | 使用 CSS 变量（--z-footer/--z-drawer/--z-overlay/--z-modal） | SCAFFOLD §2.3 |
+| F46 | 需要给元素绑定事件 | 使用 addEventListener + data-* 属性, 禁止内联 onclick | SECURITY |
+| F47 | 需要注入 HTML 到 DOM | 优先使用 DocumentFragment, 其次 innerHTML 但需要转义 | DEV-STANDARDS §4.4 |
+| F48 | 需要写 JS 代码 | 使用 ES5 语法（var / function / "use strict" / IIFE） | DEV-STANDARDS §4.1 |
+| F49 | 需要新增 JS 文件 | 使用 IIFE 模式, 挂载到 window.xxx | DEV-STANDARDS §4.2 |
+| F50 | 修改涉及 navigator/footer 中的 data-active | 三屏页面都要同步改（index-pc/tablet/mobile.html） | DEV-STANDARDS §4.8 |
+
+### 17.8 删除文件
+
+| 规则 ID | IF（条件） | THEN（动作） | 来源 |
+|---------|-----------|-------------|------|
+| F51 | 需要删除任意文件 | 先执行 5 步检查: grep HTML → grep JS → grep CSS → webpack/build 配置 → 路由配置 | DEV-STANDARDS §11.5 |
+| F52 | 5 步检查中有任意一步发现引用 | 不能删除, 先解引用 | DEV-STANDARDS §11.5 |
+
+### 17.9 绕圈圈预防（子 Agent 卡住处理）
+
+| 规则 ID | IF（条件） | THEN（动作） | 来源 |
+|---------|-----------|-------------|------|
+| F53 | 子 agent 开始出现相同错误 3 次 | 立即 kill, 不等 5 分钟 | §12.5 |
+| F54 | 子 agent 开始答非所问（写无关代码） | 立即 kill, 丢弃分支 | §12.1 |
+| F55 | 派发给子 agent 时任务描述超过 3000 字符 | 拆分为多个子任务 | §1.3 |
+| F56 | 子 agent 的 diff 超出声明范围 | 丢弃分支, 重派（加强「禁止改」清单） | §12.4 |
+| F57 | 主 agent 需要改同目录下 ≥3 个文件 | 先思考是否可以串行: A→B→C 依赖关系 | §3.1 |
+
