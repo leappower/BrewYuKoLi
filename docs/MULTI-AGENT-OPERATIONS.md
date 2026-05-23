@@ -15,7 +15,7 @@
 5. [代码修改影响矩阵](#5-代码修改影响矩阵)
 6. [构建产物与缓存规范](#6-构建产物与缓存规范)
 7. [并行修改冲突预防](#7-并行修改冲突预防)
-8. [标准提交流程规范](#8-标准提交流程规范) ← **重写：完整流程 本地提交→验证→rebase→push**
+8. [标准提交流程规范](#8-标准提交流程规范) ← **重写：完整流程 + 合入基线 + 禁止操作**
 9. [风险操作清单](#9-风险操作清单)
 10. [常见问题场景](#10-常见问题场景)
 11. [附录](#11-附录) ← **一键检查脚本 + 定时回复异常处理**
@@ -829,7 +829,123 @@ git push --dry-run origin <分支>               # 预检
 git push origin <分支>                         # 推送
 ```
 
-### 8.4 禁止操作清单 🔴
+### 8.4 Feature 分支合入基线规范 🔴
+
+Feature 分支开发完成后, 必须先合入对应的基线分支, 再从基线推送到远端。不要直接从 feature 分支推送。
+
+#### 8.4.1 推送链路
+
+```
+feat/xxx （特征开发分支）
+    │ git merge --ff-only feat/xxx
+    ▼
+基线分支（scaffold/v1.0 或 dev）
+    │ git push origin 基线分支
+    ▼
+origin/基线分支 （远端）
+```
+
+**关键规则**:
+- **不在 feature 分支上直接 push 到远端**。feature 分支只是开发过程中的工作区
+- **合入基线后才推送**。确保基线分支始终包含所有已验证的完整功能
+- 合入采用 `--ff-only`（fast-forward），确保线性历史，不产生额外 merge commit
+
+#### 8.4.2 合入流程
+
+```bash
+# ── 准备 ──
+# 确保 feature 分支已 rebase 到对应基线分支的最新状态
+# 确保工作区干净（所有变更已 commited）
+git status --porcelain  # 必须为空
+
+# ── 切到基线分支 ──
+TARGET_BRANCH="scaffold/v1.0"   # 或 "dev", 根据项目的基线分支选择
+git checkout $TARGET_BRANCH
+git pull origin $TARGET_BRANCH   # 确保基线分支本地是最新的
+
+# ── 合入 feature 分支 ──
+FEATURE_BRANCH="feat/my-feature"
+git merge --ff-only $FEATURE_BRANCH -m "feat: merge $FEATURE_BRANCH"
+# --ff-only 确保 fast-forward, 如果失败说明基线分支有额外 commit 未同步,
+# 需要回到 feature 分支执行 git rebase $TARGET_BRANCH 后再回来重试
+
+# 如果 --ff-only 失败（非快进）:
+#   1. git checkout $FEATURE_BRANCH
+#   2. git rebase $TARGET_BRANCH   ← 拉取基线的额外 commit 到 feature
+#   3. git checkout $TARGET_BRANCH
+#   4. git merge --ff-only $FEATURE_BRANCH  ← 这次应该成功
+
+# ── 验证合入后状态 ──
+# 确认 feature 分支和基线分支指向同一个 commit
+git rev-parse $TARGET_BRANCH
+git rev-parse $FEATURE_BRANCH
+# 两个输出必须完全相同
+
+# ── 推送基线（不是 feature 分支）──
+git push --dry-run origin $TARGET_BRANCH
+git push origin $TARGET_BRANCH
+
+# ── 可选：推送 feature 分支到远端备份 ──
+# 如果需要保留 feature 分支以便后续查看或丢弃:
+git checkout $FEATURE_BRANCH
+git push origin $FEATURE_BRANCH    # 这是备份, 不是合入
+
+# ── 回到 feature 分支继续开发 ──
+git checkout $FEATURE_BRANCH
+```
+
+#### 8.4.3 实际落地案例
+
+以 SWUP 替换 SPA Router 为例:
+
+```
+步骤                                   命令                                                  检查点
+───                                    ───                                                  ────
+① 开发完成, 确认工作区干净              git status --porcelain                                必须为空
+② 查看提交历史                         git log --oneline -5                                  4 个 commit 合理
+③ 确认当前是 feat 分支                  git branch --show-current                             feat/swup-replace-spa
+④ rebase 到 scaffold 基线最新           git rebase origin/scaffold/v1.0                       "当前分支是最新的"
+⑤ 切换回基线                           git checkout scaffold/v1.0                            OK
+⑥ 拉取基线最新                          git pull origin scaffold/v1.0                         Already up to date
+⑦ 合入 feat 分支（fast-forward）        git merge --ff-only feat/swup-replace-spa              Fast-forward
+⑧ 验证两个分支指向同一 commit            git rev-parse scaffold/v1.0 feat/swup-replace-spa     完全相同的 hash
+⑨ push 基线（不是 feat 分支）           git push origin scaffold/v1.0                         842b1fa..7df9582
+⑩ 切回 feat 分支继续开发                git checkout feat/swup-replace-spa                    切回成功
+```
+
+#### 8.4.4 同一个基线上多个 feature 分支的合并顺序
+
+当多条 feat 分支同时开发时, 按以下顺序合入:
+
+```bash
+# 1. 确定合并顺序（按功能依赖, 从底层到上层）
+# 依赖方在前, 被依赖方在后
+ORDER=(
+  "feat/refactor-config"
+  "feat/add-new-page"
+  "feat/i18n-update"
+)
+
+# 2. 逐个合入
+git checkout scaffold/v1.0
+for branch in "${ORDER[@]}"; do
+  echo "━━━ 合入 $branch ━━━"
+  git merge --ff-only "$branch"
+  if [ $? -ne 0 ]; then
+    echo "❌ $branch 不是 fast-forward, 需要先 rebase"
+    git checkout "$branch"
+    git rebase scaffold/v1.0
+    git checkout scaffold/v1.0
+    git merge --ff-only "$branch"
+  fi
+  echo "✅ $branch 已合入"
+done
+
+# 3. 推送基线
+git push origin scaffold/v1.0
+```
+
+### 8.5 禁止操作清单 🔴
 
 | 操作 | 原因 | 替代方案 |
 |------|------|---------|
@@ -1163,3 +1279,4 @@ npm run lint:all 2>/dev/null | tail -5              # 快速 lint
 |------|------|------|------|
 | v1.0-draft | 2026-05-23 | 初稿 | AI Agent |
 | v1.1-draft | 2026-05-23 | 重写 §8 标准提交流程：本地提交→验证→rebase→push 完整规范 + 禁止操作 + 误操作恢复 | AI Agent |
+| v1.2-draft | 2026-05-23 | 新增 §8.4 feature 分支合入基线规范: 推送链路 + 合入流程 + 实际落地案例 + 多分支合并顺序 | AI Agent |
