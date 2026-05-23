@@ -43,6 +43,7 @@ pre-commit:
     # ─── console.log/debug leak ─────────────────────────
     no-debug:
       glob: "src/**/*.{js,html}"
+      exclude: "src/assets/js/vendor/**"
       run: |
         if grep -nE 'console\.(log|debug|table)\s*\(' {staged_files} 2>/dev/null | grep -v '^\s*//' | grep -v '__DEVELOPMENT__'; then
           echo "❌ 发现 console.log/debug/table 残留！请清理后再提交。"
