@@ -538,11 +538,7 @@
     if (addMoreLink) {
       addMoreLink.addEventListener("click", function (e) {
         e.preventDefault();
-        if (window.SpaRouter && window.SpaRouter.navigate) {
-          window.SpaRouter.navigate("/products/");
-        } else {
-          window.location.href = "/products/";
-        }
+        window.location.href = "/products/";
       });
     }
 
@@ -565,7 +561,9 @@
   }
 
   // Start
-  if (document.readyState === "loading") {
+  if (typeof Boot !== "undefined") {
+    Boot.register("compare", 4, init);
+  } else if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
   } else {
     init();

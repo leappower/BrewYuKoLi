@@ -242,10 +242,9 @@
     document.body.appendChild(bar);
     bar.addEventListener("click", handleClick);
 
-    // Active state management
+    // Active state management (T4.2: spa:navigate removed — dead event)
     updateActiveState();
     window.addEventListener("popstate", updateActiveState);
-    document.addEventListener("spa:navigate", updateActiveState);
     document.addEventListener("spa:load", updateActiveState);
 
     // Resize: hide on PC, re-show on mobile/tablet
@@ -317,7 +316,9 @@
   };
 
   /* ── Bootstrap ─────────────────────────────────────────────── */
-  if (document.readyState === "loading") {
+  if (typeof Boot !== "undefined") {
+    Boot.register("bottom-tab", 5, inject);
+  } else if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", inject);
   } else {
     inject();

@@ -16,13 +16,12 @@
  */
 (function (global) {
   "use strict";
-  function _t(k){if(typeof window!=='undefined'&&window.translationManager&&typeof window.translationManager.translate==='function'){var r=window.translationManager.translate(k);return r&&r!==k?r:k}return k}
   /* ═══════════════════════════════════════════════════════════════════
      SECTION 1: CONSTANTS & CONFIGURATION
      ═══════════════════════════════════════════════════════════════════ */
   var _cfg = window.SITE_CONFIG || window._cfg || {};
-  var WHATSAPP_NUMBER = ((_cfg.contacts || {}).whatsapp)
-    || (window.Contacts && window.Contacts.whatsapp) || "8618565718814";
+  var WHATSAPP_NUMBER =
+    (_cfg.contacts || {}).whatsapp || (window.Contacts && window.Contacts.whatsapp) || "8618565718814";
   var _routes = (_cfg.routes || {}).pages || {};
   var PAGES = Object.freeze({
     home: _routes.home || "/home/",
@@ -40,11 +39,7 @@
      SECTION 3: NAVIGATION FUNCTIONS
      ═══════════════════════════════════════════════════════════════════ */
   function navigate(url) {
-    if (window.SpaRouter && typeof window.SpaRouter.navigate === "function") {
-      window.SpaRouter.navigate(url);
-    } else {
-      window.location.href = url;
-    }
+    window.location.href = url;
   }
   function whatsappHref(msg) {
     var base = "https://wa.me/" + WHATSAPP_NUMBER;
@@ -148,7 +143,7 @@
      ═══════════════════════════════════════════════════════════════════ */
   function wireWhatsAppLinks() {
     var wa = document.querySelectorAll('a[href*="wa.me"], a[href*="whatsapp"]');
-    var href = whatsappHref(_t("whatsapp_default_msg") || "Hello Yukoli, I need support.");
+    var href = whatsappHref(__safe.t("whatsapp_default_msg") || "Hello Yukoli, I need support.");
     for (var i = 0; i < wa.length; i++) {
       var link = wa[i];
       var current = link.getAttribute("href") || "";
@@ -217,7 +212,7 @@
           if (submitBtn) {
             submitBtn.disabled = true;
             submitBtn.dataset.originalText = submitBtn.textContent;
-            submitBtn.textContent = _t("form_sending") || "Sending\u2026";
+            submitBtn.textContent = __safe.t("form_sending") || "Sending\u2026";
           }
           setTimeout(function () {
             navigate(PAGES.thankYou);
@@ -360,6 +355,8 @@
   // Auto-initialize when DOM is ready
   if (window.CommonUtils && typeof window.CommonUtils.ready === "function") {
     window.CommonUtils.ready(init);
+  } else if (typeof Boot !== "undefined") {
+    Boot.register("page-init", 3, init);
   } else if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
   } else {
@@ -378,6 +375,4 @@
     safeBack: safeBack,
     PAGES: PAGES,
   };
-
-
 })(window);

@@ -16,16 +16,6 @@
   "use strict";
 
   // i18n helper
-  function _t(key) {
-    if (
-      typeof window !== "undefined" &&
-      window.translationManager &&
-      typeof window.translationManager.translate === "function"
-    ) {
-      return window.translationManager.translate(key);
-    }
-    return key;
-  }
 
   var _spaRegs = {};
   function _spaOn(tgt, evt, fn, key) {
@@ -101,56 +91,65 @@
     {
       id: "oem",
       icon: "precision_manufacturing",
-      title: _t("product_builder_mode_oem_title"),
-      subtitle: _t("product_builder_mode_oem_sub"),
+      title: __safe.t("product_builder_mode_oem_title"),
+      subtitle: __safe.t("product_builder_mode_oem_sub"),
       desc:
-        _t("product_builder_mode_oem_desc") ||
+        __safe.t("product_builder_mode_oem_desc") ||
         "You supply the formula & materials, we produce at scale. Recipe confidentiality guaranteed.",
     },
     {
       id: "odm",
       icon: "design_services",
-      title: _t("product_builder_mode_odm_title"),
-      subtitle: _t("product_builder_mode_odm_sub"),
+      title: __safe.t("product_builder_mode_odm_title"),
+      subtitle: __safe.t("product_builder_mode_odm_sub"),
       desc:
-        _t("product_builder_mode_odm_desc") ||
+        __safe.t("product_builder_mode_odm_desc") ||
         "We develop custom formulas based on your target market. You add your brand.",
     },
     {
       id: "obm",
       icon: "verified",
-      title: _t("product_builder_mode_obm_title"),
-      subtitle: _t("product_builder_mode_obm_sub"),
+      title: __safe.t("product_builder_mode_obm_title"),
+      subtitle: __safe.t("product_builder_mode_obm_sub"),
       desc:
-        _t("product_builder_mode_obm_desc") ||
+        __safe.t("product_builder_mode_obm_desc") ||
         "Full-service brand incubation: strategy, R&D, packaging, and launch support.",
     },
     {
       id: "not-sure",
       icon: "help_outline",
-      title: _t("product_builder_mode_not_sure_title"),
-      subtitle: _t("product_builder_mode_not_sure_sub"),
+      title: __safe.t("product_builder_mode_not_sure_title"),
+      subtitle: __safe.t("product_builder_mode_not_sure_sub"),
       desc:
-        _t("product_builder_mode_not_sure_desc") ||
+        __safe.t("product_builder_mode_not_sure_desc") ||
         "No worries! Our team will recommend the best model based on your goals.",
     },
   ];
 
   // Timeline options
   var TIMELINES = [
-    { id: "now", icon: "⚡", label: _t("product_builder_timeline_ready") },
-    { id: "1-3", icon: "📅", label: _t("product_builder_timeline_1_3m") },
-    { id: "3-6", icon: "🗓", label: _t("product_builder_timeline_3_6m") },
-    { id: "research", icon: "🔍", label: _t("product_builder_timeline_researching") },
+    { id: "now", icon: "⚡", label: __safe.t("product_builder_timeline_ready") },
+    { id: "1-3", icon: "📅", label: __safe.t("product_builder_timeline_1_3m") },
+    { id: "3-6", icon: "🗓", label: __safe.t("product_builder_timeline_3_6m") },
+    { id: "research", icon: "🔍", label: __safe.t("product_builder_timeline_researching") },
   ];
 
   // Quantity slider config
   var QUANTITY_STEPS = [
-    { val: 0, label: _t("product_builder_scale_lt_1k") },
-    { val: 1000, label: _t("product_builder_scale_1k_5k") },
-    { val: 5000, label: _t("product_builder_scale_5k_10k") },
-    { val: 10000, label: _t("product_builder_scale_10k_50k") },
-    { val: 50000, label: _t("product_builder_scale_50k_plus") },
+    { val: 0, label: __safe.t("product_builder_scale_lt_1k") },
+    { val: 1000, label: __safe.t("product_builder_scale_1k_5k") },
+    { val: 5000, label: __safe.t("product_builder_scale_5k_10k") },
+    { val: 10000, label: __safe.t("product_builder_scale_10k_50k") },
+    { val: 50000, label: __safe.t("product_builder_scale_50k_plus") },
+  ];
+
+  // Scale value → i18n key mapping (for data-i18n sync on slider move)
+  var QUANTITY_KEYS = [
+    "product_builder_quantity_under_1k",
+    "product_builder_quantity_1k_5k",
+    "product_builder_quantity_5k_10k",
+    "product_builder_quantity_10k_50k",
+    "product_builder_quantity_50k_plus",
   ];
 
   // Smart Match rules
@@ -160,25 +159,25 @@
 
     if (mode === "oem" && cats.indexOf("coffee") !== -1) {
       return (
-        _t("product_builder_smartmatch_oem_coffee") ||
+        __safe.t("product_builder_smartmatch_oem_coffee") ||
         "Your OEM Coffee inquiry matches our specialty: 200+ coffee recipes, certified organic options."
       );
     }
     if (mode === "odm" && cats.indexOf("meal") !== -1) {
       return (
-        _t("product_builder_smartmatch_odm_meal") ||
+        __safe.t("product_builder_smartmatch_odm_meal") ||
         "ODM Meal Replacement is our fastest-growing category! We can prepare 3-5 formula samples for your review."
       );
     }
     if (mode === "obm") {
       return (
-        _t("product_builder_smartmatch_obm") ||
+        __safe.t("product_builder_smartmatch_obm") ||
         "OBM is our premium service. A product specialist will guide you through strategy, formulation, packaging, and launch."
       );
     }
     if (mode === "not-sure") {
       return (
-        _t("product_builder_smartmatch_not_sure") ||
+        __safe.t("product_builder_smartmatch_not_sure") ||
         "We'll recommend the best model based on your goals & timeline. Share more details below for a tailored solution."
       );
     }
@@ -187,18 +186,18 @@
         return c.slug === cats[0];
       })[0];
       var catName = catLabel
-        ? _t("product_builder_category_" + catLabel.slug) || catLabel.label
-        : _t("product_builder_smartmatch_this_category") || "this category";
+        ? __safe.t("product_builder_category_" + catLabel.slug) || catLabel.label
+        : __safe.t("product_builder_smartmatch_this_category") || "this category";
       return (
         "Your " +
         (mode.toUpperCase() === "OEM"
-          ? (_t("product_builder_mode_oem_title") || "OEM") + " "
+          ? (__safe.t("product_builder_mode_oem_title") || "OEM") + " "
           : mode.toUpperCase() === "ODM"
-            ? (_t("product_builder_mode_odm_title") || "ODM") + " "
+            ? (__safe.t("product_builder_mode_odm_title") || "ODM") + " "
             : "") +
         catName +
         " " +
-        (_t("product_builder_smartmatch_reviewed") ||
+        (__safe.t("product_builder_smartmatch_reviewed") ||
           "inquiry will be reviewed by our product team. We reply within 24 hours.")
       );
     }
@@ -207,7 +206,7 @@
         "Your " +
         mode.toUpperCase() +
         " " +
-        (_t("product_builder_smartmatch_specialist") ||
+        (__safe.t("product_builder_smartmatch_specialist") ||
           "inquiry will be reviewed by our specialists. Fill in more details for a targeted quote.")
       );
     }
@@ -219,27 +218,20 @@
     var score = 0;
     if (state.mode) score += 25;
     if (state.categories.length > 0) score += 25;
-    if (state.quantity > 0) score += 20;
+    if (state.quantity >= 0) score += 20;
     if (state.timeline) score += 20;
     if (state.message && state.message.trim().length > 0) score += 10;
     return score;
   }
 
   function formatQuantity(val) {
-    var _t =
-      typeof window !== "undefined" && window.translationManager && window.translationManager.translate
-        ? function (k) {
-            return window.translationManager.translate(k);
-          }
-        : function (k) {
-            return k;
-          };
-    if (val === 0) return _t("product_builder_quantity_under_1k") || "Under 1,000 units/mo";
-    if (val === 1000) return _t("product_builder_quantity_1k_5k") || "1,000–5,000 units/mo";
-    if (val === 5000) return _t("product_builder_quantity_5k_10k") || "5,000–10,000 units/mo";
-    if (val === 10000) return _t("product_builder_quantity_10k_50k") || "10,000–50,000 units/mo";
-    if (val >= 50000) return _t("product_builder_quantity_50k_plus") || "50,000+ units/mo";
-    return val + " " + (_t("product_builder_units_per_month") || "units/mo");
+    // Use module-level _t (no shadowing needed) — both do the same thing
+    if (val === 0) return __safe.t("product_builder_quantity_under_1k") || "Under 1,000 units/mo";
+    if (val === 1000) return __safe.t("product_builder_quantity_1k_5k") || "1,000–5,000 units/mo";
+    if (val === 5000) return __safe.t("product_builder_quantity_5k_10k") || "5,000–10,000 units/mo";
+    if (val === 10000) return __safe.t("product_builder_quantity_10k_50k") || "10,000–50,000 units/mo";
+    if (val >= 50000) return __safe.t("product_builder_quantity_50k_plus") || "50,000+ units/mo";
+    return val + " " + (__safe.t("product_builder_units_per_month") || "units/mo");
   }
 
   // ─── State ──────────────────────────────────────────────────────
@@ -262,6 +254,7 @@
     dom.categoryTags = dom.builder.querySelectorAll(".category-tag");
     dom.scaleSlider = dom.builder.querySelector(".scale-slider");
     dom.scaleDisplay = dom.builder.querySelector(".scale-value");
+    dom.scaleDisplaySpan = dom.builder.querySelector(".scale-display");
     dom.scaleLabels = dom.builder.querySelectorAll(".scale-label");
     dom.timelineCards = dom.builder.querySelectorAll(".timeline-card");
     dom.briefPanel = dom.builder.querySelector(".brief-panel");
@@ -289,9 +282,11 @@
           modeIcon = MODES[i].icon;
           // Re-translate at render time — i18n may not have been ready at script load
           modeTitle =
-            _t(MODES[i].title) +
+            __safe.t(MODES[i].title) +
             " " +
-            (MODES[i].subtitle ? _t(MODES[i].subtitle) : _t("product_builder_mode_fallback") || "Manufacturing");
+            (MODES[i].subtitle
+              ? __safe.t(MODES[i].subtitle)
+              : __safe.t("product_builder_mode_fallback") || "Manufacturing");
           break;
         }
       }
@@ -301,7 +296,7 @@
     for (var j = 0; j < state.categories.length; j++) {
       for (var k = 0; k < CATEGORIES.length; k++) {
         if (CATEGORIES[k].slug === state.categories[j]) {
-          var catName = _t("product_builder_category_" + CATEGORIES[k].slug);
+          var catName = __safe.t("product_builder_category_" + CATEGORIES[k].slug);
           if (!catName || catName.indexOf("product_builder_") === 0) {
             catName = CATEGORIES[k].label;
           }
@@ -319,7 +314,7 @@
         if (TIMELINES[l].id === state.timeline) {
           tlIcon = TIMELINES[l].icon;
           // Re-translate at render time
-          tlText = tlIcon + " " + _t(TIMELINES[l].label);
+          tlText = tlIcon + " " + __safe.t(TIMELINES[l].label);
           break;
         }
       }
@@ -331,11 +326,11 @@
       dom.briefSummary.innerHTML =
         '<div class="brief-empty-state">' +
           '<span class="material-symbols-outlined">edit_note</span>' +
-          _t("product_builder_brief_empty") || "Your selections will appear here</div>";
+          __safe.t("product_builder_brief_empty") || "Your selections will appear here</div>";
       dom.briefMatch.style.display = "none";
       dom.briefScoreFill.style.width = "0%";
       dom.briefScoreText.innerHTML =
-        _t("product_builder_score_desc") || "Complete the form for a <strong>more accurate quote</strong>";
+        __safe.t("product_builder_score_desc") || "Complete the form for a <strong>more accurate quote</strong>";
       return;
     }
 
@@ -387,112 +382,115 @@
     dom.briefScoreFill.style.width = score + "%";
     if (score >= 80) {
       dom.briefScoreText.innerHTML =
-        "<strong>" + score + "%</strong> " + (_t("product_builder_score_ready") || "complete — Ready for a quote!");
+        "<strong>" +
+        score +
+        "%</strong> " +
+        (__safe.t("product_builder_score_ready") || "complete — Ready for a quote!");
     } else if (score >= 50) {
       dom.briefScoreText.innerHTML =
         "<strong>" +
         score +
         "%</strong> " +
-        (_t("product_builder_score_add_details") || "complete — Add a few more details");
+        (__safe.t("product_builder_score_add_details") || "complete — Add a few more details");
     } else {
       dom.briefScoreText.innerHTML =
         "<strong>" +
         score +
         "%</strong> " +
-        (_t("product_builder_score_more_details") || "complete — More details = better quote");
+        (__safe.t("product_builder_score_more_details") || "complete — More details = better quote");
     }
   }
 
-  // ─── Bind Events ────────────────────────────────────────────────
-  function bindModeCards() {
-    for (var i = 0; i < dom.modeCards.length; i++) {
-      (function (card) {
-        card.addEventListener("click", function () {
-          var modeId = card.getAttribute("data-mode");
-          if (!modeId) return;
+  // ─── Bind Events (using event delegation on builder container) ───
+  function bindBuilderEvents() {
+    if (!dom.builder) return;
 
-          // Deselect all
-          for (var j = 0; j < dom.modeCards.length; j++) {
-            dom.modeCards[j].classList.remove("selected");
-          }
-          card.classList.add("selected");
+    // Mode cards via delegation
+    dom.builder.addEventListener("click", function (e) {
+      var card = e.target.closest(".mode-card");
+      if (!card) return;
 
-          state.mode = modeId;
-          renderBrief();
-          updateSubmitState();
-        });
-      })(dom.modeCards[i]);
-    }
-  }
+      var modeId = card.getAttribute("data-mode");
+      if (!modeId) return;
 
-  function bindCategoryTags() {
-    for (var i = 0; i < dom.categoryTags.length; i++) {
-      (function (tag) {
-        tag.addEventListener("click", function () {
-          var slug = tag.getAttribute("data-cat");
-          if (!slug) return;
-
-          tag.classList.toggle("selected");
-          var idx = state.categories.indexOf(slug);
-          if (idx !== -1) {
-            state.categories.splice(idx, 1);
-          } else {
-            state.categories.push(slug);
-          }
-          renderBrief();
-          updateSubmitState();
-        });
-      })(dom.categoryTags[i]);
-    }
-  }
-
-  function bindScaleSlider() {
-    if (!dom.scaleSlider) return;
-    dom.scaleSlider.addEventListener("input", function () {
-      var idx = parseInt(this.value, 10);
-      if (isNaN(idx)) idx = 0;
-      state.quantity = QUANTITY_STEPS[idx].val;
-
-      // Update label highlighting
-      for (var i = 0; i < dom.scaleLabels.length; i++) {
-        dom.scaleLabels[i].classList.toggle("active", i === idx);
+      for (var j = 0; j < dom.modeCards.length; j++) {
+        dom.modeCards[j].classList.remove("selected");
       }
-      if (dom.scaleDisplay) {
-        dom.scaleDisplay.textContent = formatQuantity(state.quantity);
+      card.classList.add("selected");
+
+      state.mode = modeId;
+      renderBrief();
+      updateSubmitState();
+    });
+
+    // Category tags via delegation
+    dom.builder.addEventListener("click", function (e) {
+      var tag = e.target.closest(".category-tag");
+      if (!tag) return;
+
+      var slug = tag.getAttribute("data-cat");
+      if (!slug) return;
+
+      tag.classList.toggle("selected");
+      var idx = state.categories.indexOf(slug);
+      if (idx !== -1) {
+        state.categories.splice(idx, 1);
+      } else {
+        state.categories.push(slug);
       }
       renderBrief();
       updateSubmitState();
     });
 
-    // Labels are clickable shortcuts
-    for (var j = 0; j < dom.scaleLabels.length; j++) {
-      (function (i, label) {
-        label.addEventListener("click", function () {
-          dom.scaleSlider.value = i.toString();
-          var evt = document.createEvent("Event");
-          evt.initEvent("input", true, true);
-          dom.scaleSlider.dispatchEvent(evt);
-        });
-      })(j, dom.scaleLabels[j]);
-    }
-  }
+    // Timeline cards via delegation
+    dom.builder.addEventListener("click", function (e) {
+      var card = e.target.closest(".timeline-card");
+      if (!card) return;
 
-  function bindTimelineCards() {
-    for (var i = 0; i < dom.timelineCards.length; i++) {
-      (function (card) {
-        card.addEventListener("click", function () {
-          var tlId = card.getAttribute("data-tl");
-          if (!tlId) return;
+      var tlId = card.getAttribute("data-tl");
+      if (!tlId) return;
 
-          for (var j = 0; j < dom.timelineCards.length; j++) {
-            dom.timelineCards[j].classList.remove("selected");
+      for (var j = 0; j < dom.timelineCards.length; j++) {
+        dom.timelineCards[j].classList.remove("selected");
+      }
+      card.classList.add("selected");
+      state.timeline = tlId;
+      renderBrief();
+      updateSubmitState();
+    });
+
+    // Scale slider
+    if (dom.scaleSlider) {
+      dom.scaleSlider.addEventListener("input", function () {
+        var idx = parseInt(this.value, 10);
+        if (isNaN(idx)) idx = 0;
+        state.quantity = QUANTITY_STEPS[idx].val;
+
+        for (var i = 0; i < dom.scaleLabels.length; i++) {
+          dom.scaleLabels[i].classList.toggle("active", i === idx);
+        }
+        if (dom.scaleDisplay) {
+          dom.scaleDisplay.textContent = formatQuantity(state.quantity);
+          // Sync data-i18n so applyTranslations picks up the correct key on language switch
+          if (dom.scaleDisplaySpan) {
+            dom.scaleDisplaySpan.setAttribute("data-i18n", QUANTITY_KEYS[idx]);
           }
-          card.classList.add("selected");
-          state.timeline = tlId;
-          renderBrief();
-          updateSubmitState();
-        });
-      })(dom.timelineCards[i]);
+        }
+        renderBrief();
+        updateSubmitState();
+      });
+
+      // Labels as clickable shortcuts
+      for (var j = 0; j < dom.scaleLabels.length; j++) {
+        (function (i, label) {
+          label.addEventListener("click", function () {
+            dom.scaleSlider.value = i.toString();
+            var evt = document.createEvent("Event");
+            evt.initEvent("input", true, true);
+            dom.scaleSlider.dispatchEvent(evt);
+          });
+        })(j, dom.scaleLabels[j]);
+      }
     }
   }
 
@@ -533,7 +531,7 @@
     if (!dom.submitBtn) return;
     dom.submitBtn.addEventListener("click", function (e) {
       e.preventDefault();
-      if (state.submitted) return;
+      if (state.submitted || !dom.builder) return;
       submitBuilderForm();
     });
   }
@@ -591,7 +589,7 @@
     var requiredChecks = [
       { ok: !!state.mode, label: "product_builder_mode" },
       { ok: state.categories && state.categories.length > 0, label: "product_builder_categories" },
-      { ok: state.quantity > 0, label: "product_builder_quantity" },
+      { ok: state.quantity >= 0, label: "product_builder_quantity" },
       { ok: state.timeline, label: "product_builder_timeline" },
       { ok: nameEl && nameEl.value.trim(), el: nameEl },
       { ok: countryEl && countryEl.value, el: countryEl },
@@ -610,7 +608,7 @@
     if (firstMissing) {
       state.submitted = false;
       if (global.showNotification)
-        global.showNotification(_t("product_builder_validation_required") || "请填写所有必填项", "error");
+        global.showNotification(__safe.t("product_builder_validation_required") || "请填写所有必填项", "error");
       return;
     }
 
@@ -665,7 +663,7 @@
       var nameVal = nameEl ? nameEl.value.trim() : "";
       if (nameVal) {
         var greeting = dom.successEl.querySelector(".success-greeting");
-        if (greeting) greeting.textContent = _t("product_builder_success_greeting_prefix") + " " + nameVal + "!";
+        if (greeting) greeting.textContent = __safe.t("product_builder_success_greeting_prefix") + " " + nameVal + "!";
       }
     }
   }
@@ -673,10 +671,7 @@
   // ─── Public API ─────────────────────────────────────────────────
   function init() {
     if (!cacheDom()) return;
-    bindModeCards();
-    bindCategoryTags();
-    bindScaleSlider();
-    bindTimelineCards();
+    bindBuilderEvents();
     bindPromptChips();
     bindMessageInput();
     bindSubmit();
@@ -705,6 +700,7 @@
     if (dom.successEl) dom.successEl.classList.remove("visible");
     if (dom.scaleSlider) dom.scaleSlider.value = "0";
     if (dom.scaleDisplay) dom.scaleDisplay.textContent = formatQuantity(0);
+    if (dom.scaleDisplaySpan) dom.scaleDisplaySpan.setAttribute("data-i18n", QUANTITY_KEYS[0]);
 
     // Unselect all
     if (dom.modeCards) for (var i = 0; i < dom.modeCards.length; i++) dom.modeCards[i].classList.remove("selected");
@@ -756,7 +752,9 @@
     }
   }
 
-  if (document.readyState === "loading") {
+  if (typeof Boot !== "undefined") {
+    Boot.register("product-builder", 4, autoInit);
+  } else if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", autoInit);
   } else {
     autoInit();

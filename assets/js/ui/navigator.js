@@ -44,17 +44,6 @@
   }
 
   /** i18n helper: translate key via window.translationManager */
-  function _t(k) {
-    if (
-      typeof window !== "undefined" &&
-      window.translationManager &&
-      typeof window.translationManager.translate === "function"
-    ) {
-      var r = window.translationManager.translate(k);
-      return r && r !== k ? r : k;
-    }
-    return k;
-  }
 
   /* ================================================================
    *  常量 & 配置
@@ -216,6 +205,9 @@
   /** @type {string} 当前检测到的设备变体（mobile / tablet / pc） */
   var currentVariant = "pc";
 
+  /** @type {string|null} 上次挂载的变体（用于 SPA 过渡时避免重复重建） */
+  var _lastMountVariant = null;
+
   /** @type {number|null} resize 防抖定时器 */
   var resizeTimer = null;
 
@@ -280,7 +272,7 @@
       inputId +
       '" ' +
       'placeholder="' +
-      _t("search_products_placeholder") +
+      __safe.t("search_products_placeholder") +
       '" ' +
       'data-i18n-placeholder="' +
       escapeHtml(opts.placeholderI18n || "search_placeholder") +
@@ -289,7 +281,7 @@
       '<a class="ios-search-clear" href="javascript:void(0)" ' +
       'aria-label="Clear" role="button" tabindex="-1" ' +
       'style="text-decoration:none;-webkit-tap-highlight-color:transparent">' +
-      '<span class="material-symbols-outlined">cancel</span>' +
+      window.TemplateConstants.ICONS.cancel +
       "</a>" +
       "</div>" +
       "</div>"
@@ -1087,8 +1079,8 @@
     html += '<div class="cs-popup-title">' + escapeHtml(labelEl ? labelEl.textContent : "") + "</div>";
     html +=
       '<div class="cs-popup-search-wrap">' +
-      '<span class="material-symbols-outlined cs-popup-search-icon">search</span>' +
-      '<input type="text" class="cs-popup-search" placeholder="搜索...">' +
+      window.TemplateConstants.popupSearchIcon() +
+      window.TemplateConstants.popupSearchInput() +
       "</div>";
     html += '<div class="cs-popup-list">' + result.inst._buildItemsHTML(data) + "</div>";
     /* @audit-safe: config-driven-render */
@@ -1169,13 +1161,23 @@
    * @returns {string} 实际使用的 variant (mobile / tablet / pc)
    */
   function resolveVariant(declaredVariant) {
+    // 未声明 variant 或声明为 "responsive" → 自动检测
+    if (!declaredVariant || declaredVariant === "responsive") {
+      if (window.DeviceUtils && typeof window.DeviceUtils.getDeviceType === "function") {
+        return window.DeviceUtils.getDeviceType();
+      }
+      var width = window.innerWidth;
+      if (width < 768) return "mobile";
+      if (width < 1280) return "tablet";
+      return "pc";
+    }
+    // 显式声明 & 不是 pc → 直接返回 (mobile/tablet)
     if (declaredVariant !== "pc") return declaredVariant;
 
-    // 优先使用 DeviceUtils（与 CSS @media 一致）
+    // 声明的 pc — 仍检测设备
     if (window.DeviceUtils && typeof window.DeviceUtils.getDeviceType === "function") {
       return window.DeviceUtils.getDeviceType();
     }
-
     var width = window.innerWidth;
     if (width < 768) return "mobile";
     if (width < 1280) return "tablet";
@@ -1283,9 +1285,24 @@
    * Can be called multiple times safely (idempotent by nature).
    */
   function mountNavigator() {
+    /* ── Early exit: if device variant hasn't changed and header already exists, skip full rebuild ── */
+    var placeholders = document.querySelectorAll('[data-component="navigator"]');
+    if (placeholders.length > 0) {
+      var config = extractConfigFromPlaceholder(placeholders[0]);
+      var computedVariant = config.variant;
+      var existingHeader = document.getElementById("main-header") || document.getElementById("mobile-header");
+      if (_lastMountVariant === computedVariant && existingHeader) {
+        /* No device change — just re-init DOM-dependent features */
+        reinitTranslationManager();
+        initSlideMenu();
+        initLangSwitcher();
+        return;
+      }
+      _lastMountVariant = computedVariant;
+    }
+
     /* Close all open dropdowns before remounting */
     closeOtherDropdowns(null);
-    var placeholders = document.querySelectorAll('[data-component="navigator"]');
 
     for (var i = 0; i < placeholders.length; i++) {
       var placeholder = placeholders[i];
@@ -1293,14 +1310,14 @@
       if (!placeholder.parentNode) continue;
 
       /* 如果 placeholder 内已有 <header>，直接提取替换 */
-      var existingHeader = placeholder.querySelector("header");
-      if (existingHeader) {
-        placeholder.parentNode.replaceChild(existingHeader, placeholder);
-        continue;
+      var existingHeaderInPH = placeholder.querySelector("header");
+      if (existingHeaderInPH) {
+        placeholder.parentNode.replaceChild(existingHeaderInPH, placeholder);
+        /* Don't 'continue' — let the loop finish placeholder setup */
       }
 
       /* 否则根据配置构建新 header */
-      var config = extractConfigFromPlaceholder(placeholder);
+      config = extractConfigFromPlaceholder(placeholder);
       currentVariant = config.variant;
 
       var wrapper = document.createElement("div");
@@ -1612,7 +1629,9 @@
   registerListeners();
 
   /* 首次加载：DOM ready 后构建 header DOM */
-  if (document.readyState === "loading") {
+  if (typeof Boot !== "undefined") {
+    Boot.register("navigator", 1, mountNavigator);
+  } else if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", mountNavigator);
   } else {
     mountNavigator();

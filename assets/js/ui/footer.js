@@ -30,6 +30,9 @@
 
   var resizeTimer;
 
+  /** @type {string} 上次挂载的宽度桶（"pc"/"tablet"/"mobile"），用于 SPA 过渡时避免重复重建 */
+  var _lastFooterMountWidthBucket = null;
+
   /* ─── Mobile items (4) ─── */
   var mobileItems = [
     { id: "home", icon: "home", key: "nav_home", href: "/home/", fill: true },
@@ -141,7 +144,7 @@
       /* Products */
       '<div class="text-center">' +
       '<h4 class="text-xs sm:text-sm font-bold uppercase tracking-wider mb-2 text-center" data-i18n="footer_products_title">Products</h4>' +
-      '<ul class="space-y-1 text-xs sm:text-sm text-slate-300">' +
+      '<ul class="list-none space-y-1 text-xs sm:text-sm text-slate-300">' +
       '<li><a href="/products/all/" class="hover:text-white transition-colors" data-i18n="nav_products">All Products</a></li>' +
       '<li><a href="/products/coffee/" class="hover:text-white transition-colors" data-i18n="nav_products_coffee">Coffee</a></li>' +
       '<li><a href="/products/tea/" class="hover:text-white transition-colors" data-i18n="nav_products_tea">Tea &amp; Milk Tea</a></li>' +
@@ -154,7 +157,7 @@
       /* Solutions */
       '<div class="block text-center">' +
       '<h4 class="text-xs sm:text-sm font-bold uppercase tracking-wider mb-2 text-center" data-i18n="footer_solutions_title">Solutions</h4>' +
-      '<ul class="space-y-1 text-xs sm:text-sm text-slate-300">' +
+      '<ul class="list-none space-y-1 text-xs sm:text-sm text-slate-300">' +
       '<li><a href="/solutions/oem/" class="hover:text-white transition-colors" data-i18n="nav_solutions_oem">OEM</a></li>' +
       '<li><a href="/solutions/odm/" class="hover:text-white transition-colors" data-i18n="nav_solutions_odm">ODM</a></li>' +
       '<li><a href="/solutions/obm/" class="hover:text-white transition-colors" data-i18n="nav_solutions_obm">OBM</a></li>' +
@@ -164,7 +167,7 @@
       /* Support (shown on md+) */
       '<div class="hidden md:block">' +
       '<h4 class="text-xs sm:text-sm font-bold uppercase tracking-wider mb-2" data-i18n="footer_support_title">Support</h4>' +
-      '<ul class="space-y-1 text-xs sm:text-sm text-slate-300">' +
+      '<ul class="list-none space-y-1 text-xs sm:text-sm text-slate-300">' +
       '<li><a href="/cases/" class="hover:text-white transition-colors" data-i18n="nav_cases">Case Studies</a></li>' +
       '<li><a href="/resources/catalog/" class="hover:text-white transition-colors" data-i18n="nav_resources">Resources</a></li>' +
       '<li><a href="/contact/" class="hover:text-white transition-colors" data-i18n="nav_contact">Contact</a></li>' +
@@ -173,7 +176,7 @@
       /* Legal (shown on md+) */
       '<div class="hidden md:block">' +
       '<h4 class="text-xs sm:text-sm font-bold uppercase tracking-wider mb-2" data-i18n="footer_legal_title">Legal</h4>' +
-      '<ul class="space-y-1 text-xs sm:text-sm text-slate-300">' +
+      '<ul class="list-none space-y-1 text-xs sm:text-sm text-slate-300">' +
       '<li><a href="/privacy/" class="hover:text-white transition-colors" data-i18n="footer_legal_privacy_policy">Privacy Policy</a></li>' +
       '<li><a href="/terms/" class="hover:text-white transition-colors" data-i18n="footer_legal_user_agreement">User Agreement</a></li>' +
       "</ul></div>" +
@@ -196,11 +199,11 @@
     return (
       '<div class="bg-slate-900 text-white mx-auto mt-8" style="max-width:1920px">' +
       '<div class="section-content mx-auto px-3 sm:px-5 xl:px-10 pt-8 sm:pt-12 pb-6 sm:pb-8">' +
-      '<div class="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-8">' +
+      '<div class="grid grid-cols-4 gap-4 lg:gap-8">' +
       /* Products */
       '<div class="text-center">' +
       '<h4 class="text-xs sm:text-sm font-bold uppercase tracking-wider mb-2 sm:mb-4" data-i18n="footer_products_title">Products</h4>' +
-      '<ul class="space-y-1 sm:space-y-2 text-xs sm:text-sm text-slate-300">' +
+      '<ul class="list-none space-y-1 sm:space-y-2 text-xs sm:text-sm text-slate-300">' +
       '<li><a href="/products/all/" class="hover:text-white transition-colors" data-i18n="nav_products">All Products</a></li>' +
       '<li><a href="/products/coffee/" class="hover:text-white transition-colors" data-i18n="nav_products_coffee">Coffee Series</a></li>' +
       '<li><a href="/products/tea/" class="hover:text-white transition-colors" data-i18n="nav_products_tea">Tea &amp; Milk Tea</a></li>' +
@@ -214,7 +217,7 @@
       /* Solutions */
       '<div class="text-center">' +
       '<h4 class="text-xs sm:text-sm font-bold uppercase tracking-wider mb-2 sm:mb-4" data-i18n="footer_solutions_title">Solutions</h4>' +
-      '<ul class="space-y-1 sm:space-y-2 text-xs sm:text-sm text-slate-300">' +
+      '<ul class="list-none space-y-1 sm:space-y-2 text-xs sm:text-sm text-slate-300">' +
       '<li><a href="/solutions/oem/" class="hover:text-white transition-colors" data-i18n="nav_solutions_oem">OEM Services</a></li>' +
       '<li><a href="/solutions/odm/" class="hover:text-white transition-colors" data-i18n="nav_solutions_odm">ODM Services</a></li>' +
       '<li><a href="/solutions/obm/" class="hover:text-white transition-colors" data-i18n="nav_solutions_obm">OBM Services</a></li>' +
@@ -225,7 +228,7 @@
       /* Support */
       '<div class="text-center">' +
       '<h4 class="text-xs sm:text-sm font-bold uppercase tracking-wider mb-2 sm:mb-4" data-i18n="footer_support_title">Support</h4>' +
-      '<ul class="space-y-1 sm:space-y-2 text-xs sm:text-sm text-slate-300">' +
+      '<ul class="list-none space-y-1 sm:space-y-2 text-xs sm:text-sm text-slate-300">' +
       '<li><a href="/cases/" class="hover:text-white transition-colors" data-i18n="nav_cases">Case Studies</a></li>' +
       '<li><a href="/resources/catalog/" class="hover:text-white transition-colors" data-i18n="nav_resources">Resources</a></li>' +
       '<li><a href="/contact/" class="hover:text-white transition-colors" data-i18n="nav_contact">Contact Us</a></li>' +
@@ -235,7 +238,7 @@
       /* Legal */
       '<div class="text-center">' +
       '<h4 class="text-xs sm:text-sm font-bold uppercase tracking-wider mb-2 sm:mb-4" data-i18n="footer_legal_title">Legal</h4>' +
-      '<ul class="space-y-1 sm:space-y-2 text-xs sm:text-sm text-slate-300">' +
+      '<ul class="list-none space-y-1 sm:space-y-2 text-xs sm:text-sm text-slate-300">' +
       '<li><a href="/privacy/" class="hover:text-white transition-colors" data-i18n="footer_legal_privacy_policy">Privacy Policy</a></li>' +
       '<li><a href="/terms/" class="hover:text-white transition-colors" data-i18n="footer_legal_user_agreement">User Agreement</a></li>' +
       "</ul>" +
@@ -252,6 +255,18 @@
   function mount() {
     var footers = document.querySelectorAll('footer[data-component="footer"]');
 
+    // ── Early exit: if width bucket hasn't changed and footer already exists, skip rebuild ──
+    var w = window.innerWidth;
+    var widthBucket = w >= 1280 ? "pc" : w >= 768 ? "tablet" : "mobile";
+    if (_lastFooterMountWidthBucket === widthBucket) {
+      // Footer DOM already correct for this device — just update active state
+      if (window.translationManager && typeof window.translationManager.applyTranslations === "function") {
+        window.translationManager.applyTranslations();
+      }
+      return;
+    }
+    _lastFooterMountWidthBucket = widthBucket;
+
     // Defensive: if no footer placeholder exists, create one
     if (footers.length === 0) {
       var f = document.createElement("footer");
@@ -260,8 +275,6 @@
       document.body.appendChild(f);
       footers = [f];
     }
-
-    var w = window.innerWidth;
 
     for (var i = 0; i < footers.length; i++) {
       var footer = footers[i];
@@ -370,7 +383,9 @@
     mount();
   }
 
-  if (document.readyState === "loading") {
+  if (typeof Boot !== "undefined") {
+    Boot.register("footer", 1, init);
+  } else if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
   } else {
     init();

@@ -54,7 +54,12 @@
       items.splice(idx, 1);
     } else {
       if (items.length >= MAX_COMPARE) {
-        showToast("最多只能选择 " + MAX_COMPARE + " 款产品进行对比");
+        showToast(
+          (typeof window.__safe !== "undefined" && typeof window.__safe.t === "function"
+            ? window.__safe.t("products_compare_max_reached")
+            : "最多只能选择 3 款产品进行对比"
+          ).replace("{max}", MAX_COMPARE)
+        );
         return;
       }
       items.push(product);
@@ -220,8 +225,8 @@
       thumbs +
       "</div>" +
       '<div class="flex items-center gap-1.5 flex-shrink-0">' +
-      '<button class="float-clear px-3 py-2 rounded-lg text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">清空</button>' +
-      '<a href="/products/compare/" class="bg-primary text-white px-4 py-2 rounded-lg text-xs font-bold hover:opacity-90 transition-opacity">对比(' +
+      '<button class="float-clear px-3 py-2 rounded-lg text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" data-i18n="products_compare_clear">清空</button>' +
+      '<a href="/products/compare/" class="bg-primary text-white px-4 py-2 rounded-lg text-xs font-bold hover:opacity-90 transition-opacity"><span data-i18n="products_compare_btn">对比</span>(' +
       items.length +
       ")</a>" +
       "</div>" +
@@ -254,8 +259,8 @@
       thumbs +
       "</div>" +
       '<div class="flex items-center justify-end gap-2">' +
-      '<button class="float-clear px-3 py-1.5 rounded-lg text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">清空</button>' +
-      '<a href="/products/compare/" class="bg-primary text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:opacity-90 transition-opacity">对比(' +
+      '<button class="float-clear px-3 py-1.5 rounded-lg text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors" data-i18n="products_compare_clear">清空</button>' +
+      '<a href="/products/compare/" class="bg-primary text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:opacity-90 transition-opacity"><span data-i18n="products_compare_btn">对比</span>(' +
       items.length +
       ")</a>" +
       "</div>" +
@@ -286,7 +291,7 @@
       '<div class="flex items-center gap-3 flex-wrap sm:flex-nowrap">' +
       '<div class="flex items-center gap-2 text-sm font-bold text-slate-500 dark:text-slate-400 flex-shrink-0">' +
       '<span class="material-symbols-outlined text-primary">compare_arrows</span>' +
-      '<span>已选 <span class="text-primary">' +
+      '<span data-i18n="products_compare_selected">已选</span> <span class="text-primary">' +
       items.length +
       "</span>/3</span>" +
       "</div>" +
@@ -294,8 +299,8 @@
       thumbs +
       "</div>" +
       '<div class="flex items-center gap-2 flex-shrink-0">' +
-      '<button class="float-clear px-3 py-2 rounded-xl text-xs font-bold text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all border border-slate-200 dark:border-slate-700 hover:border-red-300">清空</button>' +
-      '<a href="/products/compare/" class="bg-primary text-white px-5 py-2 rounded-xl text-sm font-bold hover:opacity-90 transition-opacity flex items-center gap-1"><span>对比</span><span class="material-symbols-outlined text-sm">arrow_forward</span></a>' +
+      '<button class="float-clear px-3 py-2 rounded-xl text-xs font-bold text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all border border-slate-200 dark:border-slate-700 hover:border-red-300" data-i18n="products_compare_clear">清空</button>' +
+      '<a href="/products/compare/" class="bg-primary text-white px-5 py-2 rounded-xl text-sm font-bold hover:opacity-90 transition-opacity flex items-center gap-1"><span data-i18n="products_compare_btn">对比</span><span class="material-symbols-outlined text-sm">arrow_forward</span></a>' +
       "</div>" +
       "</div>"
     );
@@ -371,10 +376,24 @@
       window.dispatchEvent(new Event("product-data-ready"));
       if (callback) callback();
     } else {
-      console.warn("[ProductGrid] PRODUCT_DATA_TABLE not available; using empty array");
-      window[STORE_KEY] = [];
-      _dataLoaded = true;
-      if (callback) callback();
+      // Data not yet loaded — wait for product-data-ready event
+      // This happens when product-grid.js loads before product-data-table.js
+      var _waitTimer = setTimeout(function () {
+        // Fallback: after 3s, give up
+        console.warn("[ProductGrid] PRODUCT_DATA_TABLE timeout; using empty array");
+        window[STORE_KEY] = [];
+        _dataLoaded = true;
+        if (callback) callback();
+      }, 3000);
+      window.addEventListener("product-data-ready", function _onReady() {
+        clearTimeout(_waitTimer);
+        if (Array.isArray(window.PRODUCT_DATA_TABLE)) {
+          window[STORE_KEY] = window.PRODUCT_DATA_TABLE;
+        }
+        _dataLoaded = true;
+        if (callback) callback();
+        window.removeEventListener("product-data-ready", _onReady);
+      });
     }
   }
 
@@ -499,6 +518,9 @@
     var name = esc(p.name || model);
     var desc = esc(p.description || p.card_desc || p.highlights || "");
     var img = esc(p._imageUrl);
+    var imgSrcset =
+      img.replace(/\.webp$/i, "-1200w.webp") + " 1200w" + ", " + img.replace(/\.webp$/i, "-1920w.webp") + " 1920w";
+    var imgSizes = "(min-width:1280px) 25vw, 33vw";
     var subCatRaw = p.subCategory || cat;
     var subCat = esc(subCatRaw);
     var subCatDataI18n = ' data-i18n="' + esc(subCatRaw) + '"';
@@ -540,6 +562,10 @@
       name +
       '" class="w-full h-full object-contain p-2 transition-transform duration-500 group-hover:scale-105" src="' +
       img +
+      '" srcset="' +
+      imgSrcset +
+      '" sizes="' +
+      imgSizes +
       "\" onerror=\"if(!this.dataset.errored){this.dataset.errored='1';this.src='/assets/images/products/default.webp' }\">" +
       (badge ? '<div class="absolute top-4 left-4 flex gap-2">' + badge + "</div>" : "") +
       "</div>" +
@@ -557,11 +583,11 @@
       "</p>" +
       (specHTML ? '<div class="flex flex-wrap gap-2 mb-4">' + specHTML + "</div>" : "") +
       '<div class="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700">' +
-      '<div class="mt-auto pt-4 border-t border-slate-100 dark:border-slate-700"><span class="text-xs text-slate-400">\u8D77\u8BA2\u4EF7</span><p class="text-lg font-black text-primary">\u8BE2\u4EF7</p></div>' +
+      '<div><span class="text-xs text-slate-400" data-i18n="products_card_starting_price">\u8D77\u8BA2\u4EF7</span><p class="text-lg font-black text-primary" data-i18n="products_card_inquire">\u8BE2\u4EF7</p></div>' +
       '<div class="flex items-center gap-2">' +
       '<a href="' +
       link +
-      '" class="flex items-center gap-1.5 bg-primary text-white px-4 py-2 rounded-lg font-bold text-xs hover:opacity-90 transition-opacity"><span>\u67E5\u770B\u8BE6\u60C5</span><span class="material-symbols-outlined text-xs">arrow_forward</span></a>' +
+      '" class="flex items-center gap-1.5 bg-primary text-white px-4 py-2 rounded-lg font-bold text-xs hover:opacity-90 transition-opacity"><span data-i18n="products_card_view_detail">\u67E5\u770B\u8BE6\u60C5</span><span class="material-symbols-outlined text-xs">arrow_forward</span></a>' +
       buildCompareBtnHTML(model) +
       "</div>" +
       "</div>" +
@@ -577,6 +603,9 @@
     var name = esc(p.name || model);
     var desc = esc(p.description || p.card_desc || "");
     var img = esc(p._imageUrl);
+    var imgSrcset =
+      img.replace(/\.webp$/i, "-828w.webp") + " 828w" + ", " + img.replace(/\.webp$/i, "-1200w.webp") + " 1200w";
+    var imgSizes = "calc((100vw - 48px) / 2)";
     var subCatRaw = p.subCategory || cat;
     var subCat = esc(subCatRaw);
     var subCatDataI18n = ' data-i18n="' + esc(subCatRaw) + '"';
@@ -609,6 +638,10 @@
       name +
       '" class="w-full h-full object-contain p-2" src="' +
       img +
+      '" srcset="' +
+      imgSrcset +
+      '" sizes="' +
+      imgSizes +
       "\" onerror=\"if(!this.dataset.errored){this.dataset.errored='1';this.src='/assets/images/products/default.webp' }\">" +
       (badge ? '<div class="absolute top-3 left-3 flex gap-1.5">' + badge + "</div>" : "") +
       "</div>" +
@@ -645,6 +678,9 @@
     var name = esc(p.name || model);
     var desc = esc(p.description || p.card_desc || "");
     var img = esc(p._imageUrl);
+    var imgSrcset =
+      img.replace(/\.webp$/i, "-375w.webp") + " 375w" + ", " + img.replace(/\.webp$/i, "-828w.webp") + " 828w";
+    var imgSizes = "calc(100vw - 32px)";
     var link = "/products/" + encodeURIComponent(cat) + "/" + encodeURIComponent(model) + "/";
     var isSelected = isProductCompared(p.model);
     var selectedClass = isSelected ? " compare-selected" : "";
@@ -673,6 +709,10 @@
       name +
       '" class="w-full h-full object-contain p-1" src="' +
       img +
+      '" srcset="' +
+      imgSrcset +
+      '" sizes="' +
+      imgSizes +
       "\" onerror=\"if(!this.dataset.errored){this.dataset.errored='1';this.src='/assets/images/products/default.webp' }\">" +
       "</div>" +
       '<div class="flex-1 min-w-0">' +
@@ -805,6 +845,10 @@
     container.innerHTML = pageItems.map(renderer).join("");
     renderGalleryPagination(containerId, products.length);
     updateCompareButtons();
+
+    if (window.i18nBundle && window.i18nBundle.applyTranslations) {
+      window.i18nBundle.applyTranslations();
+    }
   }
 
   function getFilteredProducts() {
@@ -855,6 +899,10 @@
     bindLoadMore(containerId, renderer, products);
     // Init floating bar after grid render
     createFloatingBar();
+
+    if (window.i18nBundle && window.i18nBundle.applyTranslations) {
+      window.i18nBundle.applyTranslations();
+    }
   }
 
   function updateLoadMoreBtn(containerId, total, shown) {
@@ -879,6 +927,10 @@
       updateLoadMoreBtn(containerId, products.length, next);
       // Re-sync compare button states for newly rendered cards
       updateCompareButtons();
+
+      if (window.i18nBundle && window.i18nBundle.applyTranslations) {
+        window.i18nBundle.applyTranslations();
+      }
     });
   }
 
@@ -941,6 +993,10 @@
           '<p class="text-lg font-medium text-slate-500 dark:text-slate-400">' +
           '<span data-i18n="no_products_available">No products available yet.</span></p></div>';
       }
+
+      if (window.i18nBundle && window.i18nBundle.applyTranslations) {
+        window.i18nBundle.applyTranslations();
+      }
       var overlay = document.getElementById("skeleton-overlay");
       if (overlay) overlay.setAttribute("hidden", "");
       return;
@@ -952,10 +1008,12 @@
       // Gallery mode: container already initializes pagination in renderGrid
       if (grid.getAttribute && grid.getAttribute("data-gallery") === "true") {
         renderGrid("product-grid", null, 0);
-      } else if (grid && grid.classList.contains("md:grid-cols-2")) {
-        renderGrid("product-grid", renderPC, 100);
-      } else {
+      } else if (typeof DeviceUtils !== "undefined" && DeviceUtils && DeviceUtils.isMobile()) {
+        renderGrid("product-grid", renderMobile, 100);
+      } else if (typeof DeviceUtils !== "undefined" && DeviceUtils && DeviceUtils.isTablet()) {
         renderGrid("product-grid", renderTablet, 100);
+      } else {
+        renderGrid("product-grid", renderPC, 100);
       }
     }
     initCategoryTabs();
@@ -1067,7 +1125,7 @@
       // Create a temp more-btn to measure its real width
       var tmpMore = moreBtn.cloneNode(true);
       tmpMore.style.cssText = "position:absolute;visibility:hidden;pointer-events:none";
-      tmpMore.textContent = "+9 更多 \u25BC"; // worst-case width estimate
+      tmpMore.textContent = "+9 " + (typeof window.t === "function" ? window.t("products_show_more") : "更多") + " ▼"; // worst-case width estimate
       container.appendChild(tmpMore);
       var moreBtnWidth = tmpMore.offsetWidth + 8; // +8 for gap
       container.removeChild(tmpMore);
@@ -1123,7 +1181,9 @@
       }
       if (allTabs.length > maxVis) {
         var remaining = allTabs.length - maxVis;
-        moreBtn.textContent = isExpanded ? "收起 \u25B2" : "\u002B" + remaining + " 更多 \u25BC";
+        moreBtn.textContent = isExpanded
+          ? (typeof window.t === "function" ? window.t("products_show_less") : "收起") + " ▲"
+          : "+" + remaining + " " + (typeof window.t === "function" ? window.t("products_show_more") : "更多") + " ▼";
         container.appendChild(moreBtn);
       }
     }
@@ -1227,7 +1287,9 @@
     /* already inited */
   } else {
     window._productGridInited = true;
-    if (document.readyState !== "loading") {
+    if (typeof Boot !== "undefined") {
+      Boot.register("product-grid", 4, autoRender);
+    } else if (document.readyState !== "loading") {
       autoRender();
     } else {
       document.addEventListener("DOMContentLoaded", autoRender);
@@ -1257,6 +1319,10 @@
         '<span class="material-symbols-outlined text-sm">refresh</span>' +
         retryText +
         "</button></div>";
+
+      if (window.i18nBundle && window.i18nBundle.applyTranslations) {
+        window.i18nBundle.applyTranslations();
+      }
     }
     if (list && list.querySelector(".sk-product-card")) {
       console.warn("[ProductGrid] Skeleton still present in list after 5s — clearing");
@@ -1271,6 +1337,10 @@
         '<span class="material-symbols-outlined text-sm">refresh</span>' +
         retryText +
         "</button></div>";
+
+      if (window.i18nBundle && window.i18nBundle.applyTranslations) {
+        window.i18nBundle.applyTranslations();
+      }
     }
   }, 5000);
 

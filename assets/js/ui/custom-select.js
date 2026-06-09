@@ -436,7 +436,11 @@
       '">' +
       esc(displayText) +
       "</span>" +
-      '<span class="material-symbols-outlined cs-trigger-chevron">expand_more</span>';
+      window.TemplateConstants.materialIcon("expand_more", "cs-trigger-chevron");
+
+    if (window.i18nBundle && window.i18nBundle.applyTranslations) {
+      window.i18nBundle.applyTranslations();
+    }
 
     // Build float panel
     this.panel = this._buildPanel();
@@ -476,8 +480,8 @@
     if (this.searchable) {
       html +=
         '<div class="cs-search-wrap" style="position:relative;">' +
-        '<span class="material-symbols-outlined cs-search-icon">search</span>' +
-        '<input type="text" class="cs-search" placeholder="搜索...">' +
+        window.TemplateConstants.materialIcon("search", "cs-search-icon") +
+        '<input type="text" class="cs-search" placeholder="搜索..." data-i18n-placeholder="search_placeholder">' +
         "</div>";
     }
 
@@ -487,6 +491,10 @@
     /* @audit-safe: config-driven-render */
     /* @audit-safe: config-driven-render */
     panel.innerHTML = html;
+
+    if (window.i18nBundle && window.i18nBundle.applyTranslations) {
+      window.i18nBundle.applyTranslations();
+    }
 
     // Bind search
     if (this.searchable) {
@@ -611,7 +619,7 @@
         "<span>" +
         esc(o.text) +
         "</span>" +
-        '<span class="material-symbols-outlined cs-check">check</span>' +
+        window.TemplateConstants.materialIcon("check", "cs-check") +
         "</div>";
     }
     return html;
@@ -767,8 +775,8 @@
     if (this.searchable) {
       html +=
         '<div class="cs-popup-search-wrap">' +
-        '<span class="material-symbols-outlined cs-popup-search-icon">search</span>' +
-        '<input type="text" class="cs-popup-search" placeholder="搜索...">' +
+        window.TemplateConstants.popupSearchIcon() +
+        window.TemplateConstants.popupSearchInput() +
         "</div>";
     }
 
@@ -778,6 +786,10 @@
     /* @audit-safe: config-driven-render */
     /* @audit-safe: config-driven-render */
     this._popupPanel.innerHTML = html;
+
+    if (window.i18nBundle && window.i18nBundle.applyTranslations) {
+      window.i18nBundle.applyTranslations();
+    }
 
     // Insert
     document.body.appendChild(this._popupOverlay);
@@ -1023,7 +1035,11 @@
    *  AUTO-INIT on DOMContentLoaded
    * ──────────────────────────────────────────────────────────────── */
 
-  if (document.readyState === "loading") {
+  if (typeof Boot !== "undefined") {
+    Boot.register("custom-select", 5, function () {
+      CustomSelect.initAll();
+    });
+  } else if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", function () {
       CustomSelect.initAll();
     });

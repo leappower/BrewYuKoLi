@@ -1,131 +1,935 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<script src="/site.config.js"></script><script>(function(){if(localStorage.getItem("darkMode")==="true")document.documentElement.classList.add("dark")})()</script><script>(function(){var base="";var p=window.location.pathname;var n=p.replace(//$/,"");var routes=["about","cases","compliance","contact","home","manufacturing","pdp","privacy","products","solutions","terms","thank-you","cases/detail","products/all","products/beauty","products/coffee","products/gut","products/legacy","products/lifestyle","products/meal","products/tea","products/weight","resources/catalog","resources/videos","resources/whitepapers","solutions/obm","solutions/odm","solutions/oem","solutions/packaging","solutions/rd","cases/sea-coffee-brand","cases/mideast-meal-brand","cases/eu-collagen-brand","cases/jp-functional-drink","cases/na-probiotic-brand","cases/au-tea-chain","cases/af-weight-brand","cases/cn-new-consumer"];var cats=["all","coffee","tea","meal","beauty","weight","gut","lifestyle","legacy"];if(/^/products//.test(p)){var s=p.replace(/^/products//,"").replace(//$/,"");if(cats.indexOf(s)!==-1)window.location.replace(base+"/products/"+s+"/");}var st=n.replace(/^//,"");if(routes.indexOf(st)!==-1)window.location.replace(base+"/"+st+"/");else{var sg=n.split("/").pop();if(routes.indexOf(sg)!==-1)window.location.replace(base+"/"+sg+"/");}})();</script>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>404 — Page Not Found | YuKoLi</title>
-  <link rel="canonical" href="https://brew.yukoli.com/"/>
-  <meta name="robots" content="noindex">
-  <script src="/site.config.js"></script>
-  <!-- Redirect: known routes without trailing slash → correct path with slash -->
-  <script>
-  (function(){var p=window.location.pathname,n=p.replace(/\\/$/,""),s=n.replace(/^\\//,"");var cats=["all","coffee","tea","meal","beauty","weight","gut","lifestyle","legacy"];if(/^\\/products\\//.test(p)){var c=p.replace(/^\\/products\\//,"").replace(/\\/$/,"");if(cats.indexOf(c)!==-1)window.location.replace("/products/"+c+"/")}else{var routes=["home","solutions","about","contact","cases","support","manufacturing","compliance","resources","news","profit-calculator","quote","thank-you"];if(routes.indexOf(s)!==-1)window.location.replace("/"+s+"/");else{var seg=n.split("/").pop();if(routes.indexOf(seg)!==-1)window.location.replace("/"+seg+"/")}}})();
-  </script>
+<!doctype html>
+<html lang="en">
+  <head>
+  <script defer src="/assets/js/lib/runtime-guard.js"></script>
+  
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>404 — Page Not Found | YuKoLi</title>
+    <link rel="canonical" href="https://brew.yukoli.com/" />
+    <meta name="robots" content="noindex" />
+    <script src="/site.config.js"></script>
+    <!-- Redirect: known routes without trailing slash → correct path with slash -->
+    <script>
+      (function(){var p=window.location.pathname,n=p.replace(/\\/$/,""),s=n.replace(/^\\//,"");var cats=["all","coffee","tea","meal","beauty","weight","gut","lifestyle","legacy"];if(/^\\/products\\//.test(p)){var c=p.replace(/^\\/products\\//,"").replace(/\\/$/,"");if(cats.indexOf(c)!==-1)window.location.replace("/products/"+c+"/")}else{var routes=["home","solutions","about","contact","cases","support","manufacturing","compliance","resources","news","profit-calculator","quote","thank-you"];if(routes.indexOf(s)!==-1)window.location.replace("/"+s+"/");else{var seg=n.split("/").pop();if(routes.indexOf(seg)!==-1)window.location.replace("/"+seg+"/")}}})();
+    </script>
 
-  <link rel="preload" href="/assets/fonts/local-fonts.css" as="style">
-  <link rel="preload" href="/assets/css/styles.css" as="style">
-  <link rel="preload" href="/assets/css/tailwind.css" as="style">
-  <link href="/assets/fonts/local-fonts.css" rel="stylesheet"/>
-  <link rel="stylesheet" href="/assets/css/styles.css">
-  <link rel="stylesheet" href="/assets/css/tailwind.css">
-  <link rel="stylesheet" href="/assets/css/z-index-system.css">
+    <link rel="preload" href="/assets/fonts/local-fonts.css" as="style" />
+    <link rel="preload" href="/assets/css/styles.css" as="style" />
+    <link rel="preload" href="/assets/css/tailwind.css" as="style" />
+    <link href="/assets/fonts/local-fonts.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/assets/css/styles.css" />
+    <link rel="stylesheet" href="/assets/css/tailwind.css" />
+    <link rel="stylesheet" href="/assets/css/z-index-system.css" />
 
-  <script>(function(){if(localStorage.getItem('darkMode')==='true')document.documentElement.classList.add('dark')})()</script>
-  <link rel="icon" href="/assets/images/logo-header.webp" type="image/webp">
+    <script>
+      (function () {
+        if (localStorage.getItem("darkMode") === "true") document.documentElement.classList.add("dark");
+      })();
+    </script>
+    <link rel="icon" href="/assets/images/logo-header.webp" type="image/webp" />
 
-  <style>
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-10px); }
-    }
-    .float-anim { animation: float 3s ease-in-out infinite; }
-    @keyframes pulse-ring {
-      0% { transform: scale(0.8); opacity: 0.6; }
-      100% { transform: scale(1.8); opacity: 0; }
-    }
-    .pulse-ring { animation: pulse-ring 2.5s ease-out infinite; }
-    @keyframes fade-up {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .fade-up { animation: fade-up 0.6s ease-out both; }
-    .fade-up-d1 { animation-delay: 0.1s; }
-    .fade-up-d2 { animation-delay: 0.2s; }
-    .fade-up-d3 { animation-delay: 0.3s; }
-    .fade-up-d4 { animation-delay: 0.4s; }
-  </style>
-</head>
-<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased transition-colors duration-300 min-h-screen flex flex-col overflow-x-clip">
+    <style>
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-10px);
+        }
+      }
+      .float-anim {
+        animation: float 3s ease-in-out infinite;
+      }
+      @keyframes pulse-ring {
+        0% {
+          transform: scale(0.8);
+          opacity: 0.6;
+        }
+        100% {
+          transform: scale(1.8);
+          opacity: 0;
+        }
+      }
+      .pulse-ring {
+        animation: pulse-ring 2.5s ease-out infinite;
+      }
+      @keyframes fade-up {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .fade-up {
+        animation: fade-up 0.6s ease-out both;
+      }
+      .fade-up-d1 {
+        animation-delay: 0.1s;
+      }
+      .fade-up-d2 {
+        animation-delay: 0.2s;
+      }
+      .fade-up-d3 {
+        animation-delay: 0.3s;
+      }
+      .fade-up-d4 {
+        animation-delay: 0.4s;
+      }
+    </style>
+  <style id="critical-css">/* Critical CSS (deduplicated) */
+#spa-content.swup-fade-in {
+  opacity: 1;
+}
+*,
+::after,
+::before {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x: ;
+  --tw-pan-y: ;
+  --tw-pinch-zoom: ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position: ;
+  --tw-gradient-via-position: ;
+  --tw-gradient-to-position: ;
+  --tw-ordinal: ;
+  --tw-slashed-zero: ;
+  --tw-numeric-figure: ;
+  --tw-numeric-spacing: ;
+  --tw-numeric-fraction: ;
+  --tw-ring-inset: ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgba(59, 130, 246, 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur: ;
+  --tw-brightness: ;
+  --tw-contrast: ;
+  --tw-grayscale: ;
+  --tw-hue-rotate: ;
+  --tw-invert: ;
+  --tw-saturate: ;
+  --tw-sepia: ;
+  --tw-drop-shadow: ;
+  --tw-backdrop-blur: ;
+  --tw-backdrop-brightness: ;
+  --tw-backdrop-contrast: ;
+  --tw-backdrop-grayscale: ;
+  --tw-backdrop-hue-rotate: ;
+  --tw-backdrop-invert: ;
+  --tw-backdrop-opacity: ;
+  --tw-backdrop-saturate: ;
+  --tw-backdrop-sepia: ;
+  --tw-contain-size: ;
+  --tw-contain-layout: ;
+  --tw-contain-paint: ;
+  --tw-contain-style: ;
+}
+*,
+::before,
+::after {
+  box-sizing: border-box;
+  margin: 0px;
+  padding: 0px;
+}
+.absolute {
+  position: absolute;
+}
+.animate-delay-1 {
+  transition-delay: 0.1s;
+}
+.animate-delay-2 {
+  transition-delay: 0.2s;
+}
+.animate-hidden {
+  opacity: 0;
+  transform: translate3d(0px, 28px, 0px);
+  transition:
+    opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.animate-ping {
+  animation: 1s cubic-bezier(0, 0, 0.2, 1) 0s infinite normal none running ping;
+}
+.animate-visible {
+  opacity: 1 !important;
+  transform: translate3d(0px, 0px, 0px) !important;
+}
+.aspect-square {
+  aspect-ratio: 1 / 1;
+}
+.bg-background-light {
+  --tw-bg-opacity: 1;
+  background-color: rgb(248 246 246 / var(--tw-bg-opacity, 1));
+}
+.bg-background-light\/90 {
+  background-color: rgba(248, 246, 246, 0.9);
+}
+.bg-gradient-to-br {
+  background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
+}
+.bg-primary {
+  --tw-bg-opacity: 1;
+  background-color: rgb(46 125 50 / var(--tw-bg-opacity, 1));
+}
+.bg-primary\/10 {
+  background-color: rgba(46, 125, 50, 0.1);
+}
+.bg-slate-100 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(241 245 249 / var(--tw-bg-opacity, 1));
+}
+.bg-white {
+  --tw-bg-opacity: 1;
+  background-color: rgb(255 255 255 / var(--tw-bg-opacity, 1));
+}
+.border-slate-200 {
+  --tw-border-opacity: 1;
+  border-color: rgb(226 232 240 / var(--tw-border-opacity, 1));
+}
+.border-white\/10 {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.flex .material-symbols-outlined,
+[class*="items-"] .material-symbols-outlined {
+  vertical-align: initial;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.flex {
+  display: flex;
+}
+.flex-1 {
+  flex: 1 1 0%;
+}
+.flex-col {
+  flex-direction: column;
+}
+.flex-shrink-0,
+.shrink-0 {
+  flex-shrink: 0;
+}
+.flex-wrap {
+  flex-wrap: wrap;
+}
+.font-black {
+  font-weight: 900;
+}
+.font-bold {
+  font-weight: 700;
+}
+.font-medium {
+  font-weight: 500;
+}
+.font-semibold {
+  font-weight: 600;
+}
+.fullwidth-bg > .section-content {
+  padding-inline: var(--container-px, 0.75rem);
+  max-width: 1920px;
+  margin-inline: auto;
+}
+.gap-1 {
+  gap: 0.25rem;
+}
+.gap-12 {
+  gap: 3rem;
+}
+.gap-2 {
+  gap: 0.5rem;
+}
+.gap-3 {
+  gap: 0.75rem;
+}
+.gap-4 {
+  gap: 1rem;
+}
+.gap-6 {
+  gap: 1.5rem;
+}
+.grid {
+  display: grid;
+}
+.grid-cols-2 {
+  grid-template-columns: repeat(2, minmax(0px, 1fr));
+}
+.h-full {
+  height: 100%;
+}
+.items-center {
+  align-items: center;
+}
+.justify-between {
+  justify-content: space-between;
+}
+.leading-\[1\.1\] {
+  line-height: 1.1;
+}
+.leading-none {
+  line-height: 1;
+}
+.leading-relaxed {
+  line-height: 1.625;
+}
+.max-w-2xl {
+  max-width: 42rem;
+}
+.max-w-\[1920px\] {
+  max-width: 1920px;
+}
+.nav-dropdown-arrow {
+  font-size: 16px;
+  opacity: 0.5;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.nav-dropdown-card {
+  background: rgb(246, 246, 248);
+  border-radius: 13px;
+  padding: 4px;
+  border: 0.5px solid rgba(0, 0, 0, 0.08);
+  box-shadow:
+    rgba(0, 0, 0, 0.04) 0px 0px 0px 0.5px,
+    rgba(0, 0, 0, 0.12) 0px 8px 40px,
+    rgba(0, 0, 0, 0.08) 0px 2px 12px;
+}
+.nav-dropdown-chevron {
+  font-size: 16px;
+  color: rgba(60, 60, 67, 0.25);
+  flex-shrink: 0;
+}
+.nav-dropdown-icon .material-symbols-outlined {
+  font-size: 16px;
+  color: var(--color-primary, #2e7d32);
+}
+.nav-dropdown-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: rgba(236, 91, 19, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.nav-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.38;
+  color: rgb(29, 29, 31);
+  text-decoration: none;
+  border-radius: 10px;
+  position: relative;
+  transition:
+    background 0.1s,
+    transform 0.15s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.nav-dropdown-label {
+  flex: 1 1 0%;
+  min-width: 0px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nav-dropdown-panel {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%) scale(0.97);
+  transform-origin: center top;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.2s,
+    transform 0.25s cubic-bezier(0.32, 0.72, 0, 1),
+    visibility 0.2s;
+  z-index: 2500;
+  padding-top: 8px;
+}
+.nav-dropdown-separator {
+  height: 0.5px;
+  background: rgba(60, 60, 67, 0.1);
+  margin: 4px 12px;
+}
+.nav-dropdown-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  user-select: none;
+  color: inherit;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  padding-bottom: 8px;
+  margin-bottom: -8px;
+}
+.nav-dropdown-wrap {
+  position: relative;
+  display: inline-block;
+}
+.opacity-40 {
+  opacity: 0.4;
+}
+.opacity-50 {
+  opacity: 0.5;
+}
+.opacity-75 {
+  opacity: 0.75;
+}
+.overflow-x-clip {
+  overflow-x: clip;
+}
+.pb-10 {
+  padding-bottom: 2.5rem;
+}
+.pt-4 {
+  padding-top: 1rem;
+}
+.pt-6 {
+  padding-top: 1.5rem;
+}
+.px-2 {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+.px-3 {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+.px-4 {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+.px-6 {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+.px-8 {
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+.py-1 {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+.py-12 {
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+}
+.py-2 {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+.py-20 {
+  padding-top: 5rem;
+  padding-bottom: 5rem;
+}
+.py-2\.5 {
+  padding-top: 0.625rem;
+  padding-bottom: 0.625rem;
+}
+.py-3 {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+.py-4 {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+.relative {
+  position: relative;
+}
+.rounded-2xl {
+  border-radius: 1rem;
+}
+.rounded-3xl {
+  border-radius: 1.5rem;
+}
+.rounded-full {
+  border-radius: 9999px;
+}
+.rounded-lg {
+  border-radius: 0.5rem;
+}
+.rounded-xl {
+  border-radius: 0.75rem;
+}
+.section-passthrough {
+  padding-inline: var(--container-px, 0.75rem);
+}
+.shadow,
+.shadow-2xl {
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+.shadow-2xl {
+  --tw-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --tw-shadow-colored: 0 25px 50px -12px var(--tw-shadow-color);
+}
+.text-2xl {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+.text-3xl {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+.text-5xl {
+  font-size: 3rem;
+  line-height: 1;
+}
+.text-base {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+.text-center {
+  text-align: center;
+}
+.text-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+.text-primary {
+  --tw-text-opacity: 1;
+  color: rgb(46 125 50 / var(--tw-text-opacity, 1));
+}
+.text-slate-500 {
+  --tw-text-opacity: 1;
+  color: rgb(100 116 139 / var(--tw-text-opacity, 1));
+}
+.text-slate-600 {
+  --tw-text-opacity: 1;
+  color: rgb(71 85 105 / var(--tw-text-opacity, 1));
+}
+.text-slate-900 {
+  --tw-text-opacity: 1;
+  color: rgb(15 23 42 / var(--tw-text-opacity, 1));
+}
+.text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+.text-white {
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}
+.text-xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+.text-xs {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+.tracking-tight {
+  letter-spacing: -0.025em;
+}
+.tracking-widest {
+  letter-spacing: 0.1em;
+}
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 0.15s;
+}
+.transition-colors {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 0.15s;
+}
+.transition-transform {
+  transition-property: transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 0.15s;
+}
+.w-full {
+  width: 100%;
+}
+.z-\[var\(--z-header\)\] {
+  z-index: var(--z-header);
+}
+:root {
+  --color-primary: #2e7d32;
+  --color-primary-10: rgba(46, 125, 50, 0.1);
+  --color-primary-20: rgba(46, 125, 50, 0.2);
+  --line-coffee: #6f4e37;
+  --line-tea: #4caf50;
+  --line-meal: #ff8f00;
+  --line-beauty: #e91e63;
+  --line-weight: #00acc1;
+  --line-gut: #8bc34a;
+  --line-lifestyle: #7c4dff;
+  --line-legacy: #607d8b;
+  --color-accent-500: #ffb300;
+  --color-accent-600: #ff9800;
+  --color-accent-700: #f57c00;
+  --color-accent-100: #fff8e1;
+  --color-secondary-500: #8d6e63;
+  --color-secondary-700: #5d4037;
+  --color-secondary-100: #f5f1ee;
+  --color-cyan-600: #0097a7;
+  --color-cyan-100: #e0f7fa;
+  --color-bg-light: #f8f6f6;
+  --color-bg-dark: #221610;
+  --accent-coral: #ff6f61;
+  --accent-coral-bg: #fff5f4;
+  --accent-gold: #d4af37;
+  --accent-gold-bg: #fffbeb;
+  --accent-green: #00a67e;
+  --accent-green-bg: #f0fdf9;
+  --accent-teal: #2e7d32;
+  --accent-teal-bg: #e0f7fa;
+  --accent-orange: #ff7a45;
+  --accent-orange-bg: #fff7ed;
+  --color-surface: #ffffff;
+  --color-surface-soft: #faf8f3;
+  --color-border: #e7e1d6;
+  --color-border-soft: #f0ebe0;
+  --color-text: #1f2937;
+  --color-text-soft: #4b5563;
+  --color-text-muted: #6b7280;
+  --color-text-inverse: #ffffff;
+  --color-text-inverse-soft: #e0e7eb;
+  --color-success: #00a67e;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --font-heading: "Plus Jakarta Sans", "Satoshi", "Public Sans", system-ui, sans-serif;
+  --font-body: "Inter", "Noto Sans SC", "Public Sans", system-ui, sans-serif;
+  --font-mono: "Space Grotesk", monospace;
+  --h1-size: clamp(28px, 4vw, 48px);
+  --h1-line: clamp(34px, 5vw, 56px);
+  --h2-size: clamp(22px, 3vw, 36px);
+  --h2-line: clamp(28px, 4vw, 44px);
+  --body-size: clamp(15px, 1.2vw, 16px);
+  --caption-size: 13px;
+  --fw-bold: 700;
+  --fw-semibold: 600;
+  --fw-medium: 500;
+  --fw-regular: 400;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 32px;
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.06);
+  --shadow-hover: 0 12px 32px rgba(0, 0, 0, 0.1);
+  --transition-normal: all 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: all 0.48s cubic-bezier(0.34, 1.56, 0.64, 1);
+  --space-xs: 8px;
+  --space-sm: 16px;
+  --space-md: 24px;
+  --space-lg: 40px;
+  --space-xl: 64px;
+  --space-2xl: 80px;
+  --space-3xl: 120px;
+  --container-wide: 1440px;
+  --z-sticky: 200;
+  --z-overlay: 800;
+  --radius-full: 9999px;
+  --section-py: 5rem;
+  --section-py-lg: 6rem;
+  --container-px: 0.75rem;
+  --container-gap: 2rem;
+}
+@font-face {
+  font-family: "Material Symbols Outlined";
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: swap;
+  src: url("/assets/fonts/material-symbols-outlined-latin-400-normal.woff2") format("woff2");
+}
 
-  <!-- Navigator -->
-  <navigator data-component="navigator" data-active="" data-search="true" data-cta-text-key="nav_get_quote" data-cta-href="/contact/"></navigator>
+/* ═══════════════════════════════════════════════════════════════
+ * Responsive overrides — auto-generated by fix-critical-cascade.js
+ * DO NOT EDIT — re-run build to regenerate.
+ * ═══════════════════════════════════════════════════════════════ */
+@media ((min-width:640px)) {
+  .container{max-width:640px}
+  .sm\:mb-10{margin-bottom:2.5rem}
+  .sm\:mb-4{margin-bottom:1rem}
+  .sm\:mb-6{margin-bottom:1.5rem}
+  .sm\:inline{display:inline}
+  .sm\:h-32{height:8rem}
+  .sm\:h-40{height:10rem}
+  .sm\:h-44{height:11rem}
+  .sm\:w-32{width:8rem}
+  .sm\:w-40{width:10rem}
+  .sm\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sm\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .sm\:flex-row{flex-direction:row}
+  .sm\:flex-nowrap{flex-wrap:nowrap}
+  .sm\:items-center{align-items:center}
+  .sm\:gap-2{gap:.5rem}
+  .sm\:gap-4{gap:1rem}
+  .sm\:gap-6{gap:1.5rem}
+  .sm\:px-5{padding-left:1.25rem;padding-right:1.25rem}
+  .sm\:px-6{padding-left:1.5rem;padding-right:1.5rem}
+  .sm\:px-8{padding-left:2rem;padding-right:2rem}
+  .sm\:py-4{padding-top:1rem;padding-bottom:1rem}
+  .sm\:py-6{padding-top:1.5rem;padding-bottom:1.5rem}
+  .sm\:pb-20{padding-bottom:5rem}
+  .sm\:pb-8{padding-bottom:2rem}
+  .sm\:pt-12{padding-top:3rem}
+  .sm\:pt-4{padding-top:1rem}
+  .sm\:pt-8{padding-top:2rem}
+  .sm\:text-5xl{font-size:3rem;line-height:1}
+  .sm\:text-base{font-size:1rem;line-height:1.5rem}
+  .sm\:text-lg{font-size:1.125rem;line-height:1.75rem}
+  .sm\:text-sm{font-size:.875rem;line-height:1.25rem}
+  .sm\:text-xs{font-size:.75rem;line-height:1rem}
+}
 
-  <!-- 404 Content -->
-  <main class="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12 sm:py-20 lg:py-24">
-    <div class="max-w-2xl mx-auto text-center">
+@media ((min-width:768px)) {
+  .container{max-width:768px}
+  .md\:block{display:block}
+  .md\:flex{display:flex}
+  .md\:inline-flex{display:inline-flex}
+  .md\:hidden{display:none}
+  .md\:h-28{height:7rem}
+  .md\:h-32{height:8rem}
+  .md\:w-28{width:7rem}
+  .md\:w-32{width:8rem}
+  .md\:grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}
+  .md\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .md\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .md\:grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .md\:grid-cols-6{grid-template-columns:repeat(6,minmax(0,1fr))}
+  .md\:flex-row{flex-direction:row}
+  .md\:items-center{align-items:center}
+  .5{gap:.375rem}
+  .md\:gap-10{gap:2.5rem}
+  .md\:p-5{padding:1.25rem}
+  .md\:px-3{padding-left:.75rem;padding-right:.75rem}
+  .md\:px-5{padding-left:1.25rem;padding-right:1.25rem}
+  .md\:text-2xl{font-size:1.5rem;line-height:2rem}
+  .md\:text-3xl{font-size:1.875rem;line-height:2.25rem}
+  .md\:text-5xl{font-size:3rem;line-height:1}
+  .md\:text-6xl{font-size:3.75rem;line-height:1}
+  .md\:text-xl{font-size:1.25rem;line-height:1.75rem}
+}
 
-      <!-- Animated 404 Graphic -->
-      <div class="relative flex items-center justify-center h-36 sm:h-44 lg:h-48 mb-8 sm:mb-10 fade-up">
-        <div class="absolute w-32 h-32 sm:w-40 sm:h-40 rounded-full border-2 border-primary/20 pulse-ring"></div>
-        <div class="absolute w-32 h-32 sm:w-40 sm:h-40 rounded-full border-2 border-primary/10 pulse-ring" style="animation-delay: 0.8s;"></div>
-        <div class="float-anim relative z-10">
-          <img src="/assets/images/logo-footer.webp" alt="YuKoLi Logo" class="w-28 h-28 sm:w-32 sm:h-32 object-contain" />
+@media ((min-width:1024px)) {
+  .container{max-width:1024px}
+  .lg\:mb-6{margin-bottom:1.5rem}
+  .lg\:block{display:block}
+  .lg\:flex{display:flex}
+  .lg\:h-48{height:12rem}
+  .lg\:h-auto{height:auto}
+  .lg\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .lg\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .lg\:grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .lg\:grid-cols-6{grid-template-columns:repeat(6,minmax(0,1fr))}
+  .lg\:flex-row{flex-direction:row}
+  .lg\:items-center{align-items:center}
+  .lg\:gap-0{gap:0}
+  .lg\:gap-12{gap:3rem}
+  .lg\:gap-5{gap:1.25rem}
+  .lg\:gap-6{gap:1.5rem}
+  .lg\:gap-8{gap:2rem}
+  .lg\:rounded-3xl{border-radius:1.5rem}
+  .lg\:p-10{padding:2.5rem}
+  .lg\:p-20{padding:5rem}
+  .lg\:p-6{padding:1.5rem}
+  .lg\:p-8{padding:2rem}
+  .lg\:px-5{padding-left:1.25rem;padding-right:1.25rem}
+  .lg\:px-8{padding-left:2rem;padding-right:2rem}
+  .lg\:py-10{padding-top:2.5rem;padding-bottom:2.5rem}
+  .lg\:py-12{padding-top:3rem;padding-bottom:3rem}
+  .lg\:py-20{padding-top:5rem;padding-bottom:5rem}
+  .lg\:pb-24{padding-bottom:6rem}
+  .lg\:text-2xl{font-size:1.5rem;line-height:2rem}
+  .lg\:text-3xl{font-size:1.875rem;line-height:2.25rem}
+  .lg\:text-4xl{font-size:2.25rem;line-height:2.5rem}
+  .lg\:text-5xl{font-size:3rem;line-height:1}
+  .lg\:text-6xl{font-size:3.75rem;line-height:1}
+  .lg\:text-xl{font-size:1.25rem;line-height:1.75rem}
+  .lg\:shadow-2xl{--tw-shadow:0 25px 50px -12px rgba(0,0,0,.25);--tw-shadow-colored:0 25px 50px -12px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}
+}
+
+@media ((min-width:1280px)) {
+  .container{max-width:1280px}
+  .xl\:flex{display:flex}
+  .xl\:grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .xl\:px-10{padding-left:2.5rem;padding-right:2.5rem}
+  .xl\:text-5xl{font-size:3rem;line-height:1}
+  .xl\:text-6xl{font-size:3.75rem;line-height:1}
+  .xl\:text-7xl{font-size:4.5rem;line-height:1}
+  .xl\:text-8xl{font-size:6rem;line-height:1}
+  .xl\:text-xl{font-size:1.25rem;line-height:1.75rem}
+}
+
+@media ((min-width:1536px)) {
+  .container{max-width:1536px}
+}
+</style></head>
+  <body
+    class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased transition-colors duration-300 min-h-screen flex flex-col overflow-x-clip"
+  >
+    <!-- Navigator -->
+    <navigator
+      data-component="navigator"
+      data-variant="responsive"
+      data-active=""
+      data-search="true"
+      data-cta-text-key="nav_get_quote"
+      data-cta-href="/contact/"
+    ></navigator>
+
+    <!-- 404 Content -->
+    <main id="spa-content" class="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 pt-[var(--nav-height,65px)] pb-12 sm:pb-20 lg:pb-24">
+      <div class="max-w-2xl mx-auto text-center">
+        <!-- Animated 404 Graphic -->
+        <div class="relative flex items-center justify-center h-36 sm:h-44 lg:h-48 mb-8 sm:mb-10 fade-up">
+          <div class="absolute w-32 h-32 sm:w-40 sm:h-40 rounded-full border-2 border-primary/20 pulse-ring"></div>
+          <div
+            class="absolute w-32 h-32 sm:w-40 sm:h-40 rounded-full border-2 border-primary/10 pulse-ring"
+            style="animation-delay: 0.8s"
+          ></div>
+          <div class="float-anim relative z-10">
+            <img
+              src="/assets/images/logo-footer.webp"
+              alt="YuKoLi Logo"
+              class="w-28 h-28 sm:w-32 sm:h-32 object-contain"
+            />
+          </div>
+        </div>
+
+        <!-- Text -->
+        <div class="space-y-3 sm:space-y-4 mb-8 sm:mb-10">
+          <div
+            class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest fade-up fade-up-d1"
+          >
+            <span class="material-symbols-outlined text-sm">error</span>
+            <span data-i18n="error_404_badge">Error 404</span>
+          </div>
+          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight fade-up fade-up-d1">
+            Page Not
+            <span class="text-primary">Found</span>
+          </h1>
+          <p
+            class="text-base sm:text-lg text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed fade-up fade-up-d2"
+            data-i18n="error_404_desc"
+          >
+            The page you're looking for doesn't exist or has been moved. Let's get you back on track.
+          </p>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mb-8 sm:mb-10 fade-up fade-up-d3">
+          <a
+            href="/home/"
+            class="bg-primary text-white px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl font-bold text-sm sm:text-base flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-primary/20 transition-all"
+          >
+            <span class="material-symbols-outlined text-lg">home</span>
+            <span data-i18n="nav_home">Go to Homepage</span>
+          </a>
+          <a
+            href="/products/"
+            class="border-2 border-slate-200 dark:border-slate-700 px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl font-bold text-sm sm:text-base flex items-center justify-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+          >
+            <span class="material-symbols-outlined text-lg">inventory_2</span>
+            <span data-i18n="nav_products">Browse Products</span>
+          </a>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="pt-6 sm:pt-8 border-t border-slate-200 dark:border-slate-800 fade-up fade-up-d4">
+          <p
+            class="text-xs text-slate-400 mb-3 sm:mb-4 font-semibold uppercase tracking-widest"
+            data-i18n="error_404_quick_links"
+          >
+            Quick Links
+          </p>
+          <div class="flex flex-wrap gap-x-3 gap-y-2 sm:gap-x-4 justify-center">
+            <a
+              href="/solutions/"
+              class="text-sm text-slate-600 dark:text-slate-400 hover:text-primary transition-colors font-medium"
+              data-i18n="nav_solutions"
+            >
+              Solutions
+            </a>
+            <span class="text-slate-300 dark:text-slate-700 hidden sm:inline">·</span>
+            <a
+              href="/manufacturing/"
+              class="text-sm text-slate-600 dark:text-slate-400 hover:text-primary transition-colors font-medium"
+              data-i18n="nav_manufacturing"
+            >
+              Manufacturing
+            </a>
+            <span class="text-slate-300 dark:text-slate-700 hidden sm:inline">·</span>
+            <a
+              href="/cases/"
+              class="text-sm text-slate-600 dark:text-slate-400 hover:text-primary transition-colors font-medium"
+              data-i18n="nav_resources"
+            >
+              Case Studies
+            </a>
+            <span class="text-slate-300 dark:text-slate-700 hidden sm:inline">·</span>
+            <a
+              href="/contact/"
+              class="text-sm text-slate-600 dark:text-slate-400 hover:text-primary transition-colors font-medium"
+              data-i18n="nav_contact"
+            >
+              Contact Us
+            </a>
+          </div>
         </div>
       </div>
+    </main>
 
-      <!-- Text -->
-      <div class="space-y-3 sm:space-y-4 mb-8 sm:mb-10">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest fade-up fade-up-d1">
-          <span class="material-symbols-outlined text-sm">error</span>
-          <span data-i18n="error_404_badge">Error 404</span>
-        </div>
-        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight fade-up fade-up-d1">
-          Page Not <span class="text-primary">Found</span>
-        </h1>
-        <p class="text-base sm:text-lg text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed fade-up fade-up-d2" data-i18n="error_404_desc">
-          The page you're looking for doesn't exist or has been moved. Let's get you back on track.
-        </p>
-      </div>
+    <!-- Footer -->
+    <footer data-component="footer" data-active="home"></footer>
 
-      <!-- Navigation Buttons -->
-      <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mb-8 sm:mb-10 fade-up fade-up-d3">
-        <a href="/home/"
-           class="bg-primary text-white px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl font-bold text-sm sm:text-base flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-primary/20 transition-all">
-          <span class="material-symbols-outlined text-lg">home</span>
-          <span data-i18n="nav_home">Go to Homepage</span>
-        </a>
-        <a href="/products/"
-           class="border-2 border-slate-200 dark:border-slate-700 px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl font-bold text-sm sm:text-base flex items-center justify-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
-          <span class="material-symbols-outlined text-lg">inventory_2</span>
-          <span data-i18n="nav_products">Browse Products</span>
-        </a>
-      </div>
-
-      <!-- Quick Links -->
-      <div class="pt-6 sm:pt-8 border-t border-slate-200 dark:border-slate-800 fade-up fade-up-d4">
-        <p class="text-xs text-slate-400 mb-3 sm:mb-4 font-semibold uppercase tracking-widest" data-i18n="error_404_quick_links">Quick Links</p>
-        <div class="flex flex-wrap gap-x-3 gap-y-2 sm:gap-x-4 justify-center">
-          <a href="/solutions/" class="text-sm text-slate-600 dark:text-slate-400 hover:text-primary transition-colors font-medium" data-i18n="nav_solutions">Solutions</a>
-          <span class="text-slate-300 dark:text-slate-700 hidden sm:inline">·</span>
-          <a href="/manufacturing/" class="text-sm text-slate-600 dark:text-slate-400 hover:text-primary transition-colors font-medium" data-i18n="nav_manufacturing">Manufacturing</a>
-          <span class="text-slate-300 dark:text-slate-700 hidden sm:inline">·</span>
-          <a href="/cases/" class="text-sm text-slate-600 dark:text-slate-400 hover:text-primary transition-colors font-medium" data-i18n="nav_resources">Case Studies</a>
-          <span class="text-slate-300 dark:text-slate-700 hidden sm:inline">·</span>
-          <a href="/contact/" class="text-sm text-slate-600 dark:text-slate-400 hover:text-primary transition-colors font-medium" data-i18n="nav_contact">Contact Us</a>
-        </div>
-      </div>
-
-    </div>
-  </main>
-
-  <!-- Footer -->
-  <footer data-component="footer" data-active="home"></footer>
-
-  <!-- Scripts -->
-  <script defer src="/assets/js/lang-registry.js"></script>
-  <script defer src="/assets/js/translations.js"></script>
-  <script defer src="/assets/js/translations-dropdown-template.js"></script>
-  <script defer src="/assets/js/ui/dropdown-styles.js"></script>
-  <script defer src="/assets/js/ui/dropdown-base.js"></script>
-  <script defer src="/assets/js/ui/products-dropdown.js"></script>
-  <script defer src="/assets/js/ui/solutions-dropdown.js"></script>
-  <script defer src="/assets/js/ui/applications-dropdown.js"></script>
-  <script defer src="/assets/js/ui/support-dropdown.js"></script>
-  <script defer src="/assets/js/ui/about-dropdown.js"></script>
-  <script defer src="/assets/js/ui/nav-dropdown.js"></script>
-  <script defer src="/assets/js/ui/navigator.js"></script>
-  <script defer src="/assets/js/ui/slide-menu.js"></script>
-  <script defer src="/assets/js/ui/footer.js"></script>
-  <script defer src="/assets/js/ui/floating-actions.js"></script>
-</body>
+    <!-- Scripts -->
+    <script defer src="/assets/js/lib/i18n-core.js"></script>
+    <script defer src="/assets/js/lib/template-constants.js"></script>
+    <script defer src="/assets/js/lang-registry.js"></script>
+    <script defer src="/assets/js/translations.js"></script>
+    <script defer src="/assets/js/translations-dropdown-template.js"></script>
+    <script defer src="/assets/js/ui/dropdown-styles.js"></script>
+    <script defer src="/assets/js/ui/dropdown-base.js"></script>
+    <script defer src="/assets/js/ui/products-dropdown.js"></script>
+    <script defer src="/assets/js/ui/solutions-dropdown.js"></script>
+    <script defer src="/assets/js/ui/applications-dropdown.js"></script>
+    <script defer src="/assets/js/ui/support-dropdown.js"></script>
+    <script defer src="/assets/js/ui/about-dropdown.js"></script>
+    <script defer src="/assets/js/ui/nav-dropdown.js"></script>
+    <script defer src="/assets/js/ui/navigator.js"></script>
+    <script defer src="/assets/js/ui/slide-menu.js"></script>
+    <script defer src="/assets/js/ui/footer.js"></script>
+    <script defer src="/assets/js/ui/floating-actions.js"></script>
+    <script defer src="/assets/js/breadcrumb-data.js"></script>
+    <script defer src="/assets/js/breadcrumb-render.js"></script>
+    <script defer src="/assets/js/breadcrumb.js"></script>
+  <!-- ssg-nav-footer-injected -->
+    <script defer src="/assets/js/lib/boot-queue.js"></script>
+    <script defer src="/assets/js/theme-init.js"></script>
+    <script defer src="/assets/js/ui/trust-bar.js"></script>
+    <script defer src="/assets/js/ui/bottom-tab.js"></script>
+    <script defer src="/assets/js/ui/search-engine.js"></script>
+    <script defer src="/assets/js/ui/mega-menu.js"></script>
+    <script defer src="/assets/js/ui/nav-footer.js"></script>
+    <script defer src="/assets/js/swup-init.js"></script>
+    <script defer src="/assets/js/ui/search-engine.js"></script>
+      <script defer src="/assets/js/search-index.js"></script>
+  </body>
 </html>
