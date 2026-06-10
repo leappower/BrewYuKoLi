@@ -676,7 +676,7 @@
       '<p class="flex-1 text-xs text-slate-500 dark:text-slate-400 mb-0 line-clamp-2">' +
       desc +
       "</p>" +
-      '<div class="mt-auto pt-3 border-t border-slate-100 dark:border-slate-700">' +
+      '<div class="mt-auto flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-700">' +
       '<a href="/contact/?from=product&model=' +
       encodeURIComponent(p.model || "") +
       "&name=" +
@@ -684,7 +684,7 @@
       "&category=" +
       encodeURIComponent(p._categoryLabel || p._category || "") +
       '" class="flex items-center gap-1 bg-primary text-white px-3 py-1.5 rounded-lg font-bold text-xs hover:opacity-90 transition-opacity"><span data-i18n="products_card_inquire">询价</span><span class="material-symbols-outlined text-xs">arrow_forward</span></a>' +
-      '<div class="flex items-center gap-2 mt-2">' +
+      '<div class="flex items-center gap-2">' +
       '<a href="' +
       link +
       '" class="flex items-center gap-1 text-primary text-sm font-bold hover:underline"><span data-i18n="products_card_view_detail">查看详情</span><span class="material-symbols-outlined text-xs">arrow_forward</span></a>' +
