@@ -3,9 +3,11 @@
 <html class="light" lang="en">
   <head>
   <script defer src="/assets/js/lib/runtime-guard.js"></script>
+    <script defer src="/assets/js/lib/boot-queue.js"></script>
+    <script defer src="/assets/js/theme-init.js"></script>
   
     <script src="/site.config.js" defer></script>
-    <script src="/assets/js/utils/dom-utils.js?v=1781013132580"></script>
+    <script src="/assets/js/utils/dom-utils.js?v=1781075380653"></script>
     <link rel="canonical" href="https://brew.yukoli.com/contact/" />
     <link rel="alternate" hreflang="zh-CN" href="https://brew.yukoli.com/contact/" />
     <link rel="alternate" hreflang="en" href="https://brew.yukoli.com/contact/" />
@@ -20,16 +22,19 @@
     />
     <meta property="og:url" content="https://brew.yukoli.com/contact/" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <meta data-i18n-meta="contact_meta_description" name="description" content="Contact YuKoLi — Get health food OEM/ODM quotes and technical consultation. Global service network covering Southeast Asia, Middle East, South Asia, and more."
+    <meta
+      data-i18n-meta="contact_meta_description"
+      name="description"
+      content="Contact YuKoLi — Get health food OEM/ODM quotes and technical consultation. Global service network covering Southeast Asia, Middle East, South Asia, and more."
     />
     <title data-i18n="contact_meta_title">Yukoli | Contact Us - Health Food OEM/ODM</title>
-    <link rel="preload" href="/assets/fonts/local-fonts.css" as="style" />
-    <link rel="preload" href="/assets/css/styles.css?v=1781013132580" as="style" />
-    <link rel="preload" href="/assets/css/tailwind.css?v=1781013132580" as="style" />
-    <link href="/assets/fonts/local-fonts.css" rel="stylesheet" />
-    <link rel="stylesheet" href="/assets/css/styles.css?v=1781013132580" />
-    <link rel="stylesheet" href="/assets/css/product-builder.css?v=1781013132580" />
-    <link rel="stylesheet" href="/assets/css/tailwind.css?v=1781013132580" />
+    <link rel="preload" href="/assets/css/styles.css?v=1781075380653" as="style" />
+    <link rel="preload" href="/assets/css/tailwind.css?v=1781075380653" as="style" />
+    <link rel="preload" href="/assets/fonts/local-fonts.css" as="style" onload="this.rel = 'stylesheet'" />
+    <noscript><link rel="stylesheet" href="/assets/fonts/local-fonts.css" /></noscript>
+    <link rel="stylesheet" href="/assets/css/styles.css?v=1781075380653" />
+    <link rel="stylesheet" href="/assets/css/product-builder.css?v=1781075380653" />
+    <link rel="stylesheet" href="/assets/css/tailwind.css?v=1781075380653" />
     <script>
       (function () {
         if (localStorage.getItem("darkMode") === "true") document.documentElement.classList.add("dark");
@@ -40,7 +45,7 @@
     <!-- SEO JSON-LD: ContactPage + LocalBusiness -->
     <script type="application/ld+json">
       {
-        "@context": "https:/schema.org",
+        "@context": "https://schema.org",
         "@type": "ContactPage",
         "name": "联系我们 - 佛山市跃迁力科技有限公司",
         "url": "https://brew.yukoli.com/contact/",
@@ -49,9 +54,9 @@
     </script>
     <script type="application/ld+json">
       {
-        "@context": "https:/schema.org",
+        "@context": "https://schema.org",
         "@type": "LocalBusiness",
-        "name": "Foshan <span data-i18n="seo_yukoli">YuKoLi</span> Technology Co., Ltd.",
+        "name": "Foshan YuKoLi Technology Co., Ltd.",
         "url": "https://brew.yukoli.com/contact/",
         "telephone": "+8618565718814",
         "email": "support.brew@yukoli.com",
@@ -64,8 +69,8 @@
         },
       }
     </script>
-      <link rel="stylesheet" href="/assets/css/skeleton.css" />
-<script>(function(){var ua=navigator.userAgent.toLowerCase();var m=/mobile|android|iphone|ipod/i.test(ua)&&!/ipad|tablet|silk/i.test(ua);var t=/ipad|tablet|silk/i.test(ua)||(/android/i.test(ua)&&!/mobile/i.test(ua));if(!m&&!t)return;var d=m?"index-mobile.html":"index-tablet.html";var p=window.location.pathname;if(!//$/.test(p))p+="/";var b=p.substring(0,p.lastIndexOf("/")+1);if(b&&b!=="/")window.location.replace(b+d)})()</script><style id="critical-css">/* Critical CSS (deduplicated) */
+    <link rel="stylesheet" href="/assets/css/skeleton.css" />
+  <script>(function(){var ua=navigator.userAgent.toLowerCase();var m=/mobile|android|iphone|ipod/i.test(ua)&&!/ipad|tablet|silk/i.test(ua);var t=/ipad|tablet|silk/i.test(ua)||(/android/i.test(ua)&&!/mobile/i.test(ua));if(!m&&!t)return;var d=m?"index-mobile.html":"index-tablet.html";var p=window.location.pathname;if(p.charAt(p.length-1)!=="/")p+="/";var b=p.substring(0,p.lastIndexOf("/")+1);if(b&&b!=="/")window.location.replace(b+d)})()</script><style id="critical-css">/* Critical CSS (deduplicated) */
 #spa-content.swup-fade-in {
   opacity: 1;
 }
@@ -994,11 +999,22 @@
                         姓名
                         <span style="color: #ef4444">*</span>
                       </label>
-                      <input type="text" name="fullname" required placeholder="John Doe" data-i18n-placeholder="product_builder_contact_name_placeholder" />
+                      <input
+                        type="text"
+                        name="fullname"
+                        required
+                        placeholder="John Doe"
+                        data-i18n-placeholder="product_builder_contact_name_placeholder"
+                      />
                     </div>
                     <div class="contact-field">
                       <label data-i18n="product_builder_contact_company">公司名称</label>
-                      <input type="text" name="company" placeholder="Your Company" data-i18n-placeholder="product_builder_contact_company_placeholder" />
+                      <input
+                        type="text"
+                        name="company"
+                        placeholder="Your Company"
+                        data-i18n-placeholder="product_builder_contact_company_placeholder"
+                      />
                     </div>
                     <div class="contact-field">
                       <label data-i18n="product_builder_contact_country">
@@ -1037,7 +1053,12 @@
                   <div class="contact-row-2" style="margin-top: 0.625rem">
                     <div class="contact-field">
                       <label data-i18n="product_builder_contact_email">邮箱</label>
-                      <input type="email" name="email" placeholder="you@company.com" data-i18n-placeholder="product_builder_contact_email_placeholder" />
+                      <input
+                        type="email"
+                        name="email"
+                        placeholder="you@company.com"
+                        data-i18n-placeholder="product_builder_contact_email_placeholder"
+                      />
                     </div>
                     <div class="contact-field">
                       <label data-i18n="product_builder_contact_phone">
@@ -1089,7 +1110,8 @@
                           type="tel"
                           name="phone"
                           required
-                          placeholder="手机号" data-i18n-placeholder="product_builder_contact_phone_placeholder"
+                          placeholder="手机号"
+                          data-i18n-placeholder="product_builder_contact_phone_placeholder"
                           style="
                             flex: 1;
                             padding: 8px 12px;
@@ -1139,7 +1161,8 @@
                       <input
                         type="text"
                         name="contactAccount"
-                        placeholder="WhatsApp/微信/Telegram 账号" data-i18n-placeholder="product_builder_contact_whatsapp_placeholder"
+                        placeholder="WhatsApp/微信/Telegram 账号"
+                        data-i18n-placeholder="product_builder_contact_whatsapp_placeholder"
                         style="
                           width: 100%;
                           padding: 8px 12px;
@@ -1295,7 +1318,9 @@
                   <span class="text-2xl">🇨🇳</span>
                   <h3 class="text-xl font-bold" data-i18n="contact_office_hq">China Headquarters</h3>
                 </div>
-                <p class="text-slate-500 text-sm" data-i18n="contact_company_name">Foshan YuKoLi Technology Co., Ltd.</p>
+                <p class="text-slate-500 text-sm" data-i18n="contact_company_name">
+                  Foshan YuKoLi Technology Co., Ltd.
+                </p>
               </div>
             </div>
             <div class="space-y-4">
@@ -1303,10 +1328,17 @@
                 <span class="material-symbols-outlined text-primary text-lg mt-0.5">apartment</span>
                 <div>
                   <p class="text-sm font-bold mb-1" data-i18n="contact_china_address_label">China Address</p>
-                  <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed" data-i18n="contact_china_address">
-                    Room 502-6, Building 12, Wanchuangyuan, No.83 Zhanlun Road, Honggang Community, Daliang Street, Shunde District, Foshan City, Guangdong Province, China
+                  <p
+                    class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed"
+                    data-i18n="contact_china_address"
+                  >
+                    Room 502-6, Building 12, Wanchuangyuan, No.83 Zhanlun Road, Honggang Community, Daliang Street,
+                    Shunde District, Foshan City, Guangdong Province, China
                   </p>
-                  <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mt-2" data-i18n="contact_china_address_zh">
+                  <p
+                    class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mt-2"
+                    data-i18n="contact_china_address_zh"
+                  >
                     广东省佛山市顺德区大良街道红岗社区展伦路83号万创园12栋502室之六
                   </p>
                 </div>
@@ -1327,7 +1359,12 @@
                 data-i18n="alt_partnership"
                 class="w-full h-full object-cover"
                 src="/assets/images/contact-partner-tour-1920w.webp"
-               srcset="/assets/images/contact-partner-tour-1200w.webp 1200w, /assets/images/contact-partner-tour-1920w.webp 1920w" sizes="(min-width: 1280px) 25vw, 33vw" />
+                srcset="
+                  /assets/images/contact-partner-tour-1200w.webp 1200w,
+                  /assets/images/contact-partner-tour-1920w.webp 1920w
+                "
+                sizes="(min-width: 1280px) 25vw, 33vw"
+              />
             </div>
             <div class="relative p-12 lg:p-20 text-center">
               <h2 class="text-3xl lg:text-4xl font-black mb-6" data-i18n="contact_partner_title">Become a Partner</h2>
@@ -1388,17 +1425,15 @@
         </div>
       </section>
     </main>
-<script defer src="/assets/js/ui/helpers.js?v=1781013132580"></script>
-    <script defer src="/assets/js/ui/page-effects.js?v=1781013132580"></script>
-    <script defer src="/assets/js/product-builder.js?v=1781013132580"></script>
-    <script defer src="/assets/js/ui/form-interactions.js?v=1781013132580"></script>
-    <script defer src="/assets/js/page-interactions.js?v=1781013132580"></script>
-    <script src="/assets/js/utils/device-utils.js?v=1781013132580"></script>
+    <script defer src="/assets/js/ui/helpers.js?v=1781075380653"></script>
+    <script defer src="/assets/js/ui/page-effects.js?v=1781075380653"></script>
+    <script defer src="/assets/js/product-builder.js?v=1781075380653"></script>
+    <script defer src="/assets/js/ui/form-interactions.js?v=1781075380653"></script>
+    <script defer src="/assets/js/page-interactions.js?v=1781075380653"></script>
+    <script src="/assets/js/utils/device-utils.js?v=1781075380653"></script>
     <!-- SWUP SPA Router v4.9.0 (replaces spa-router.js) -->
-    <script defer src="/assets/js/vendor/swup-bundle.umd.js?v=1781013132580"></script>
-<!-- ssg-nav-footer-injected -->
-    <script defer src="/assets/js/lib/boot-queue.js"></script>
-    <script defer src="/assets/js/theme-init.js"></script>
+    <script defer src="/assets/js/vendor/swup-bundle.umd.js?v=1781075380653"></script>
+  <!-- ssg-nav-footer-injected -->
     <script defer src="/assets/js/i18n-bundle.js"></script>
     <script defer src="/assets/js/dropdown-bundle.js"></script>
     <script defer src="/assets/js/nav-bundle.js"></script>

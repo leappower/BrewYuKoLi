@@ -2370,8 +2370,6 @@
       overlay.removeAttribute("data-hidden");
       overlay.style.opacity = "1";
       overlay.style.pointerEvents = "auto";
-      // 三屏适配：读取 navigator 实际高度
-      overlay.style.paddingTop = getNavigatorHeight() + "px";
       void overlay.offsetHeight; // 强制重绘
       overlay.style.transition = "";
     }
@@ -2410,6 +2408,33 @@
         }
       } catch (e) {
         console.warn("[SWUP] ProductGrid init error:", e);
+      }
+      // 面包屑：产品分类页需要注入面包屑脚本（链式加载保证顺序）
+      if (typeof global.Breadcrumb === "undefined") {
+        var bcVersion = "?v=" + (global.SW_VERSION || Date.now());
+        var bcScripts = [
+          "/assets/js/breadcrumb-data.js" + bcVersion,
+          "/assets/js/breadcrumb-render.js" + bcVersion,
+          "/assets/js/breadcrumb.js" + bcVersion,
+        ];
+        (function loadChain(i) {
+          if (i >= bcScripts.length) return;
+          var ss = document.createElement("script");
+          ss.src = bcScripts[i];
+          ss.onload = function () {
+            loadChain(i + 1);
+          };
+          ss.onerror = function () {
+            loadChain(i + 1);
+          };
+          document.head.appendChild(ss);
+        })(0);
+      } else {
+        try {
+          global.Breadcrumb.refresh();
+        } catch (e) {
+          /* noop */
+        }
       }
     }
 
@@ -2630,9 +2655,67 @@
    * /news/detail/  → /news/detail-pc.html (flat-file pattern)
    */
   function routeToFetchUrl(path) {
-    // 所有路由都有 index.html (PC版fallback)，直接请求干净路径
-    // serve 会返回 dist/<route>/index.html
-    return path;
+    var suffix = getDeviceSuffix();
+
+    // 将 SPA 路由路径转换为设备特定页面的 fetch URL。
+    // resolveUrl 的逆向：routeToFetchUrl 负责找到实际存在的 HTML 文件去 fetch，
+    // resolveUrl 负责把 fetch 回来的文件路径映射回地址栏显示的干净 URL。
+
+    // Aliases / redirects
+    if (path === "/" || path === "/home/") return "/home/" + suffix;
+
+    // Flat-file pattern (no directory)
+    if (path === "/news/detail/") return "/news/detail-" + suffix.replace("index-", "");
+
+    // Solutions pages
+    if (path.indexOf("/solutions/") === 0) {
+      if (path === "/solutions/") return "/solutions/" + suffix;
+      var solMatch = path.match(/^\/solutions\/(oem|odm|obm|rd|packaging)\/$/);
+      if (solMatch) return "/solutions/" + solMatch[1] + "/" + suffix;
+    }
+
+    // Resources pages
+    if (path.indexOf("/resources/") === 0) {
+      var resMatch = path.match(/^\/resources\/(catalog|videos|whitepapers)\/$/);
+      if (resMatch) return "/resources/" + resMatch[1] + "/" + suffix;
+    }
+
+    // Manufacturing & Compliance
+    if (path === "/manufacturing/") return "/manufacturing/" + suffix;
+    if (path === "/compliance/") return "/compliance/" + suffix;
+
+    // 动态产品分类页: /products/<slug>/
+    var prodMatch = path.match(/^\/(products\/)?(all|coffee|tea|meal|beauty|weight|gut|lifestyle|legacy)\/$/);
+    if (prodMatch) {
+      return "/products/" + prodMatch[2] + "/" + suffix;
+    }
+
+    // 产品详情 PDP: /products/<category>/<model>/
+    if (/^\/products\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+\/$/.test(path)) {
+      return "/pdp/" + suffix;
+    }
+
+    // 产品详情 PDP: /products/<model>/ (旧格式)
+    if (
+      /^\/products\/[^/]+\/$/.test(path) &&
+      !/^\/products\/(all|coffee|tea|meal|beauty|weight|gut|lifestyle|legacy|detail|compare)\/$/.test(path)
+    ) {
+      return "/pdp/" + suffix;
+    }
+
+    // 案例详情页: /cases/<slug>/ → 共享模板 /cases/detail/?slug=<slug>
+    if (/^\/cases\/([a-z0-9-]+)\//.test(path)) {
+      var caseSlug = path.match(/^\/cases\/([a-z0-9-]+)\//)[1];
+      return "/cases/detail/" + suffix + "?slug=" + caseSlug;
+    }
+
+    // 旧路由兼容: /beauty/ → /products/beauty/
+    var redirectMatch = path.match(/^\/(coffee|tea|meal|beauty|weight|gut|lifestyle|legacy)\/$/);
+    if (redirectMatch) return "/products/" + redirectMatch[1] + "/" + suffix;
+
+    // 通用约定: /<path>/ → /<path>/index-{device}.html
+    var clean = path.replace(/\/+$/, "");
+    return clean + "/" + suffix;
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -2851,10 +2934,11 @@
         // ─── 面包屑脚本注入与渲染 ───
         // 策略：不依赖 DOM 中的 script 标签（SwupHeadPlugin persistAssets 会导致
         // 标签残留但全局变量可能已丢失），只检查全局变量 window.Breadcrumb 是否存在。
-        // PDP 路径需要面包屑：/products/<cat>/<model>/
+        // PDP 路径 + 产品分类页需要面包屑
         var toUrl = visit.to && visit.to.url ? visit.to.url : p;
         var _isPdp = /^\/products\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+\/$/.test(toUrl);
-        if (_isPdp) {
+        var _isCategoryPage = /^\/products\/(all|coffee|tea|meal|beauty|weight|gut|lifestyle|legacy)\/$/.test(toUrl);
+        if (_isPdp || _isCategoryPage) {
           if (typeof global.Breadcrumb !== "undefined") {
             setTimeout(function () {
               try {
@@ -2864,15 +2948,14 @@
               }
             }, 50);
           } else {
+            var bcVersion = "?t=" + (global.SW_VERSION || Date.now());
             var bcScripts = [
-              "/assets/js/breadcrumb-data.js?t=" + (global.SW_VERSION || Date.now()),
-              "/assets/js/breadcrumb-render.js?t=" + (global.SW_VERSION || Date.now()),
-              "/assets/js/breadcrumb.js?t=" + (global.SW_VERSION || Date.now()),
+              "/assets/js/breadcrumb-data.js" + bcVersion,
+              "/assets/js/breadcrumb-render.js" + bcVersion,
+              "/assets/js/breadcrumb.js" + bcVersion,
             ];
-            var bcPending = bcScripts.length;
-            function bcOnReady() {
-              bcPending--;
-              if (bcPending <= 0) {
+            (function loadChain(i) {
+              if (i >= bcScripts.length) {
                 setTimeout(function () {
                   if (typeof global.Breadcrumb !== "undefined") {
                     try {
@@ -2884,20 +2967,19 @@
                     console.warn("[Breadcrumb] scripts loaded but Breadcrumb undefined");
                   }
                 }, 50);
+                return;
               }
-            }
-            for (var bi = 0; bi < bcScripts.length; bi++) {
-              (function (src) {
-                var ss = document.createElement("script");
-                ss.src = src;
-                ss.onload = bcOnReady;
-                ss.onerror = function () {
-                  console.warn("[Breadcrumb] script load failed:", src);
-                  bcOnReady();
-                };
-                document.head.appendChild(ss);
-              })(bcScripts[bi]);
-            }
+              var ss = document.createElement("script");
+              ss.src = bcScripts[i];
+              ss.onload = function () {
+                loadChain(i + 1);
+              };
+              ss.onerror = function () {
+                console.warn("[Breadcrumb] script load failed:", bcScripts[i]);
+                loadChain(i + 1);
+              };
+              document.head.appendChild(ss);
+            })(0);
           }
         } // ─── 脚本热重载：提取新页面特有脚本并注入 ───
         // 替代 ScriptsPlugin optin 模式，解决 data-swup-reload-script 遗漏问题
@@ -3029,8 +3111,6 @@
               overlay.removeAttribute("data-hidden");
               overlay.style.opacity = "1";
               overlay.style.pointerEvents = "auto";
-              // 三屏适配：读取 navigator 实际高度
-              overlay.style.paddingTop = getNavigatorHeight() + "px";
               // 强制重绘后触发过渡
               overlay.offsetWidth;
               overlay.style.transition = "";

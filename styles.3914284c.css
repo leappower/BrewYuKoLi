@@ -4178,3 +4178,9 @@ html.dark .cs-popup-panel .cs-group-label {
   }
 }
 
+/* ─── Breadcrumb: stay above hero-overlap (negative margin) ─── */
+#breadcrumb-container {
+  position: relative;
+  z-index: 5;
+}
+

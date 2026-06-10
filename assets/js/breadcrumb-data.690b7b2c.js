@@ -129,7 +129,7 @@
         result.slug = slug;
         result.segments = [
           { label: "nav_product_center", href: "/products/" },
-          { label: resolveLabel(info.label, currentLang), href: "/products/" + slug + "/" },
+          { label: resolveLabel(info.label, currentLang), href: "/products/" + slug + "/", current: true },
         ];
       }
       return result;
@@ -142,7 +142,7 @@
       var model = pdpMatch[2];
       // 跳过设备文件名（index-pc.html, index-mobile.html, index-tablet.html）
       if (/^index-(?:pc|mobile|tablet)\.html?$/.test(model)) {
-        // 降级为品类页
+        // 降级为品类页（设备检测重定向到 index-pc.html 等）
         var slug = categoryFromUrl;
         var info = productSlugs[slug];
         if (info) {
@@ -152,7 +152,6 @@
             { label: "nav_product_center", href: "/products/" },
             { label: resolveLabel(info.label, currentLang), href: "/products/" + slug + "/", current: true },
           ];
-          result.siblings = buildSiblingList("products", slug, categories, currentLang);
         }
         return result;
       }
