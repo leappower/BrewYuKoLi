@@ -1,6 +1,6 @@
 // SW_VERSION 由 build.sh 在 production 构建时自动注入（毫秒时间戳）
 // dev 模式保留此默认值
-var SW_VERSION = "v1781090255878";
+var SW_VERSION = "v1781092840778";
 
 self.addEventListener("install", function() {
   self.skipWaiting();
